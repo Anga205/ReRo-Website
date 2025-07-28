@@ -3,9 +3,9 @@
 import json
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
-from websocket_manager import add_connection, remove_connection, send_initial_slots
-from websocket_handlers import process_client_message
-from models import create_error_response
+from websocket.manager import add_connection, remove_connection, send_initial_slots
+from websocket.handlers import process_client_message
+from core.models import create_error_response
 
 logger = logging.getLogger(__name__)
 

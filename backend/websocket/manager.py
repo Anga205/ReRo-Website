@@ -4,8 +4,8 @@ import json
 import logging
 from typing import Dict, List
 from fastapi import WebSocket
-from models import create_slots_message
-from slot_manager import get_slot_summary
+from core.models import create_slots_message
+from core.slot_manager import get_slot_summary
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,8 @@
 
 from typing import List, Dict
 import logging
-from config import SLOT_CONFIG
-from database import (
+from core.config import SLOT_CONFIG
+from database.operations import (
     get_all_slots, 
     book_slot_in_db, 
     cancel_slot_in_db, 
@@ -34,16 +34,16 @@ def is_slot_available(slot_id: int) -> bool:
     
     return is_slot_available_in_db(slot_id)
 
-def book_slot(slot_id: int) -> bool:
+def book_slot(slot_id: int, booked_by: str) -> bool:
     """Book a slot if available. Returns True if successful, False otherwise."""
     if not is_slot_available(slot_id):
         return False
     
-    return book_slot_in_db(slot_id)
+    return book_slot_in_db(slot_id, booked_by)
 
-def cancel_slot_booking(slot_id: int) -> bool:
+def cancel_slot_booking(slot_id: int, user_srn: str = None) -> bool:
     """Cancel a slot booking. Returns True if successful, False otherwise."""
-    return cancel_slot_in_db(slot_id)
+    return cancel_slot_in_db(slot_id, user_srn)
 
 def get_slot_summary() -> Dict:
     """Get a summary of all slots."""

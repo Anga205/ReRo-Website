@@ -4,20 +4,30 @@ import json
 import logging
 from typing import Dict
 from fastapi import WebSocket
-from models import (
+from core.models import (
     create_booking_response, 
     create_cancellation_response, 
     create_error_response,
     create_slots_message
 )
-from slot_manager import book_slot, cancel_slot_booking, get_slot_summary
-from websocket_manager import broadcast_slot_update
+from core.slot_manager import book_slot, cancel_slot_booking, get_slot_summary
+from websocket.manager import broadcast_slot_update
+from auth.pesu_auth import validate_user_credentials
 
 logger = logging.getLogger(__name__)
 
-async def handle_slot_booking(slot_id: int) -> Dict:
-    """Handle slot booking request and return response message."""
-    if book_slot(slot_id):
+async def handle_slot_booking(slot_id: int, username: str, password: str) -> Dict:
+    """Handle slot booking request with authentication and return response message."""
+    # Validate user credentials first
+    user_srn = await validate_user_credentials(username, password)
+    if not user_srn:
+        return create_booking_response(
+            success=False,
+            message="Authentication failed. Invalid credentials.",
+            slot_id=slot_id
+        )
+    
+    if book_slot(slot_id, user_srn):
         # Broadcast update to all connections
         await broadcast_slot_update()
         
@@ -33,9 +43,18 @@ async def handle_slot_booking(slot_id: int) -> Dict:
             slot_id=slot_id
         )
 
-async def handle_slot_cancellation(slot_id: int) -> Dict:
-    """Handle slot cancellation request and return response message."""
-    if cancel_slot_booking(slot_id):
+async def handle_slot_cancellation(slot_id: int, username: str, password: str) -> Dict:
+    """Handle slot cancellation request with authentication and return response message."""
+    # Validate user credentials first
+    user_srn = await validate_user_credentials(username, password)
+    if not user_srn:
+        return create_cancellation_response(
+            success=False,
+            message="Authentication failed. Invalid credentials.",
+            slot_id=slot_id
+        )
+    
+    if cancel_slot_booking(slot_id, user_srn):
         # Broadcast update to all connections
         await broadcast_slot_update()
         
@@ -47,7 +66,7 @@ async def handle_slot_cancellation(slot_id: int) -> Dict:
     else:
         return create_cancellation_response(
             success=False,
-            message=f"Slot {slot_id} was not booked",
+            message=f"Slot {slot_id} was not booked by you or does not exist",
             slot_id=slot_id
         )
 
@@ -66,20 +85,26 @@ async def process_client_message(websocket: WebSocket, message_data: Dict) -> No
     
     if message_type == "book_slot":
         slot_id = message_data.get("slot_id")
-        if slot_id is not None:
-            response = await handle_slot_booking(slot_id)
+        username = message_data.get("username")
+        password = message_data.get("password")
+        
+        if slot_id is not None and username and password:
+            response = await handle_slot_booking(slot_id, username, password)
             await websocket.send_text(json.dumps(response))
         else:
-            error_response = create_error_response("Missing slot_id in booking request")
+            error_response = create_error_response("Missing slot_id, username, or password in booking request")
             await websocket.send_text(json.dumps(error_response))
     
     elif message_type == "cancel_slot":
         slot_id = message_data.get("slot_id")
-        if slot_id is not None:
-            response = await handle_slot_cancellation(slot_id)
+        username = message_data.get("username")
+        password = message_data.get("password")
+        
+        if slot_id is not None and username and password:
+            response = await handle_slot_cancellation(slot_id, username, password)
             await websocket.send_text(json.dumps(response))
         else:
-            error_response = create_error_response("Missing slot_id in cancellation request")
+            error_response = create_error_response("Missing slot_id, username, or password in cancellation request")
             await websocket.send_text(json.dumps(error_response))
     
     elif message_type == "get_slots":

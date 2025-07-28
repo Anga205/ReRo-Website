@@ -2,14 +2,33 @@
 
 from typing import Dict, Any, List
 from datetime import datetime
+from pydantic import BaseModel
 
-def create_slot_model(slot_id: int, start_time: str, end_time: str, is_booked: bool) -> Dict[str, Any]:
+class LoginRequest(BaseModel):
+    """Model for login request."""
+    username: str
+    password: str
+
+class BookingRequest(BaseModel):
+    """Model for booking request with authentication."""
+    slot_id: int
+    username: str
+    password: str
+
+class CancellationRequest(BaseModel):
+    """Model for cancellation request with authentication."""
+    slot_id: int
+    username: str
+    password: str
+
+def create_slot_model(slot_id: int, start_time: str, end_time: str, is_booked: bool, booked_by: str = None) -> Dict[str, Any]:
     """Create a slot data model."""
     return {
         "id": slot_id,
         "start_time": start_time,
         "end_time": end_time,
-        "is_booked": is_booked
+        "is_booked": is_booked,
+        "booked_by": booked_by
     }
 
 def create_slots_message(slots: List[Dict], available_slots: List[int], booked_slots: List[int]) -> Dict[str, Any]:

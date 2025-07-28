@@ -1,12 +1,20 @@
+"""
+ReRo Website Backend - Slot Booking API
+
+A FastAPI-based slot booking system with real-time WebSocket updates
+and PESU authentication integration.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 # Import modular components
-from config import setup_logging, CORS_CONFIG, API_CONFIG, SERVER_CONFIG
-from routes import router
-from websocket_endpoints import websocket_endpoint
-from database import initialize_database
+from core.config import setup_logging, CORS_CONFIG, API_CONFIG, SERVER_CONFIG
+from routes.main import main_router
+from routes.auth import auth_router
+from websocket.endpoints import websocket_endpoint
+from database.operations import initialize_database
 
 # Configure logging
 setup_logging()
@@ -31,7 +39,8 @@ app = FastAPI(
 app.add_middleware(CORSMiddleware, **CORS_CONFIG)
 
 # Include HTTP routes
-app.include_router(router)
+app.include_router(main_router)
+app.include_router(auth_router)
 
 # Register WebSocket endpoint
 app.websocket("/slot-booking")(websocket_endpoint)
