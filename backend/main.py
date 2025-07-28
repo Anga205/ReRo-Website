@@ -13,6 +13,7 @@ import logging
 from core.config import setup_logging, CORS_CONFIG, API_CONFIG, SERVER_CONFIG
 from routes.main import main_router
 from routes.auth import auth_router
+from routes.devices import devices_router
 from websocket.endpoints import websocket_endpoint
 from database.operations import initialize_database
 
@@ -41,6 +42,7 @@ app.add_middleware(CORSMiddleware, **CORS_CONFIG)
 # Include HTTP routes
 app.include_router(main_router)
 app.include_router(auth_router)
+app.include_router(devices_router)
 
 # Register WebSocket endpoint
 app.websocket("/slot-booking")(websocket_endpoint)

@@ -1,5 +1,4 @@
-backend/venv
-backend/__pycache__
+backend/venv/
 backend/*.pyc
 backend/venv/*
 backend/venv/**/*
@@ -7,3 +6,5 @@ backend/venv/**/*
 backend/data/
 backend/data/*
 **.db
+**/__pycache__/*
+**/__pycache__/
