@@ -48,6 +48,59 @@ npm run build
 npm run preview
 ```
 
+## 🏗️ Modular Component Architecture
+
+The application features a clean, modular component structure for better maintainability:
+
+### 📁 Component Structure
+```
+src/components/
+├── auth/           # Authentication components
+│   ├── LoginHeader.tsx
+│   ├── LoginForm.tsx
+│   ├── LoginFooter.tsx
+│   ├── RegisterHeader.tsx
+│   ├── RegisterForm.tsx
+│   └── RegisterFooter.tsx
+├── booking/        # Slot booking components
+│   ├── AppHeader.tsx
+│   ├── BookingHeader.tsx
+│   ├── SlotCard.tsx
+│   ├── SlotsGrid.tsx
+│   └── StatusAlerts.tsx
+├── home/           # Home page components
+│   ├── HeroSection.tsx
+│   ├── FeaturesSection.tsx
+│   └── TimeSlotsInfo.tsx
+└── index.ts        # Centralized exports
+```
+
+### ✨ Benefits
+- **🔧 Maintainable**: Single responsibility principle
+- **♻️ Reusable**: Components can be used across pages  
+- **🧪 Testable**: Smaller components are easier to test
+- **📖 Readable**: Main page components are clean and focused
+- **⚡ Efficient**: Better tree-shaking and code splitting
+
+### 📝 Example Usage
+```tsx
+// Clean, readable page component
+const SlotBooking: React.FC = () => {
+  // ... component logic ...
+  
+  return (
+    <div className="min-h-screen bg-slate-900">
+      <AppHeader userEmail={user?.email} isConnected={isConnected} onLogout={handleLogout} />
+      <Container maxWidth="xl" className="py-8">
+        <BookingHeader />
+        <StatusAlerts error={error} isConnected={isConnected} />
+        <SlotsGrid slotsData={slotsData} userEmail={user?.email} loading={loading} onSlotAction={handleSlotAction} />
+      </Container>
+    </div>
+  );
+};
+```
+
 ## 📱 Pages & Features
 
 ### 🏠 Home Page (`/`)
