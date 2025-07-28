@@ -2,30 +2,37 @@
 
 import json
 import logging
-from typing import Dict
+from typing import Dict, List
 from fastapi import WebSocket
-from state import get_active_connections
 from models import create_slots_message
 from slot_manager import get_slot_summary
 
 logger = logging.getLogger(__name__)
 
+# Global state for active connections (kept in memory for real-time updates)
+active_connections: List[WebSocket] = []
+
+def get_active_connections() -> List[WebSocket]:
+    """Get the list of active WebSocket connections."""
+    return active_connections
+
+def get_connection_count() -> int:
+    """Get the number of active connections."""
+    return len(active_connections)
+
 async def add_connection(websocket: WebSocket) -> None:
     """Add a new WebSocket connection to active connections."""
-    active_connections = get_active_connections()
     active_connections.append(websocket)
     logger.info(f"New connection added. Total connections: {len(active_connections)}")
 
 async def remove_connection(websocket: WebSocket) -> None:
     """Remove a WebSocket connection from active connections."""
-    active_connections = get_active_connections()
     if websocket in active_connections:
         active_connections.remove(websocket)
         logger.info(f"Connection removed. Total connections: {len(active_connections)}")
 
 async def broadcast_to_all_connections(message: Dict) -> None:
     """Broadcast a message to all active WebSocket connections."""
-    active_connections = get_active_connections()
     if not active_connections:
         return
     
