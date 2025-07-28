@@ -1,69 +1,105 @@
-# React + TypeScript + Vite
+# ReRo Website Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Beautiful, responsive React frontend for the ReRo slot booking system with real-time WebSocket updates.
 
-Currently, two official plugins are available:
+## 🔥 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **💻 Beautiful UI**: Material-UI components with Tailwind CSS styling
+- **🔐 Secure Authentication**: Login and registration with form validation
+- **⚡ Real-time Updates**: WebSocket integration for live slot updates
+- **📱 Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **🎨 Modern Design**: Clean, professional interface with smooth animations
+- **🚀 Fast & Efficient**: Built with Vite for optimal performance
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Type-safe development
+- **Material-UI** - Comprehensive React component library
+- **Tailwind CSS** - Utility-first CSS framework
+- **Vite** - Fast build tool and development server
+- **React Router** - Client-side routing
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🚀 Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Installation
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Start development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Open browser**:
+   Navigate to `http://localhost:5173`
+
+### Production Build
+
+```bash
+npm run build
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📱 Pages & Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 🏠 Home Page (`/`)
+- Welcome page with feature overview
+- Quick access to login/register
+- Time slots information display
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 🔐 Authentication Pages
+- **Login** (`/login`): Email/password authentication
+- **Register** (`/register`): New account creation with validation
+
+### 📅 Slot Booking (`/booking`)
+- **Real-time Grid**: Visual slot grid with live updates
+- **Color-coded Status**:
+  - 🟢 **Green**: Available slots
+  - 🔵 **Blue**: Your bookings  
+  - 🔴 **Red**: Booked by others
+- **One-click Actions**: Book or cancel slots instantly
+- **WebSocket Connection**: Live connection status indicator
+- **Responsive Layout**: Works on all screen sizes
+
+## 🔌 WebSocket Integration
+
+The frontend maintains a persistent WebSocket connection to the backend for real-time updates:
+
+- **Auto-reconnection**: Automatic reconnection with exponential backoff
+- **Live Status**: Connection indicator in the header
+- **Instant Updates**: Slot changes appear immediately for all users
+- **Error Handling**: Graceful error handling and user feedback
+
+## 🎨 UI Components
+
+### Material-UI Components Used:
+- `Container`, `Card`, `Typography` - Layout and content
+- `TextField`, `Button` - Forms and interactions  
+- `Alert`, `Chip` - Feedback and status indicators
+- `AppBar`, `Toolbar` - Navigation header
+- `CircularProgress` - Loading states
+
+### Tailwind CSS Classes:
+- Responsive grid layouts (`grid-cols-1 sm:grid-cols-2 md:grid-cols-3`)
+- Color utilities (`bg-green-100`, `text-blue-600`)
+- Spacing and sizing (`p-4`, `mb-6`, `w-16 h-16`)
+- Transitions and animations (`transition-all`, `hover:scale-105`)
+
+## 📱 Responsive Design
+
+The application is fully responsive with breakpoints:
+- **Mobile**: Single column layout
+- **Tablet**: 2-3 column grid
+- **Desktop**: 4+ column grid for optimal slot viewing
+
+---
+
+**Built with ❤️ for the ReRo slot booking system!** 🎉
