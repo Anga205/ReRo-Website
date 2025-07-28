@@ -25,11 +25,23 @@ def get_database_connection() -> sqlite3.Connection:
     return conn
 
 def initialize_database() -> None:
-    """Initialize the database with the slots table."""
+    """Initialize the database with the slots and users tables."""
     ensure_database_directory()
     
     with get_database_connection() as conn:
         cursor = conn.cursor()
+        
+        # Create users table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_login DATETIME DEFAULT NULL
+            )
+        """)
         
         # Create slots table if it doesn't exist (with new booked_by column)
         cursor.execute("""
@@ -153,14 +165,14 @@ def book_slot_in_db(slot_id: int, booked_by: str) -> bool:
         logger.error(f"Database error while booking slot {slot_id}: {e}")
         return False
 
-def cancel_slot_in_db(slot_id: int, user_srn: Optional[str] = None) -> bool:
+def cancel_slot_in_db(slot_id: int, user_email: Optional[str] = None) -> bool:
     """Cancel a slot booking in the database. Returns True if successful."""
     try:
         with get_database_connection() as conn:
             cursor = conn.cursor()
             
             # Check if slot exists and is booked
-            if user_srn:
+            if user_email:
                 cursor.execute(
                     "SELECT is_booked, booked_by FROM slots WHERE id = ?", 
                     (slot_id,)
@@ -175,8 +187,8 @@ def cancel_slot_in_db(slot_id: int, user_srn: Optional[str] = None) -> bool:
                     logger.warning(f"Slot {slot_id} is not booked")
                     return False
                 
-                if result["booked_by"] != user_srn:
-                    logger.warning(f"Slot {slot_id} was not booked by user {user_srn}")
+                if result["booked_by"] != user_email:
+                    logger.warning(f"Slot {slot_id} was not booked by user {user_email}")
                     return False
             else:
                 cursor.execute(
@@ -231,7 +243,7 @@ def is_slot_available_in_db(slot_id: int) -> bool:
         logger.error(f"Database error while checking slot {slot_id}: {e}")
         return False
 
-def get_user_bookings(user_srn: str) -> List[dict]:
+def get_user_bookings(user_email: str) -> List[dict]:
     """Get all bookings for a specific user."""
     try:
         with get_database_connection() as conn:
@@ -241,7 +253,7 @@ def get_user_bookings(user_srn: str) -> List[dict]:
                 FROM slots 
                 WHERE booked_by = ? AND is_booked = TRUE
                 ORDER BY id
-            """, (user_srn,))
+            """, (user_email,))
             
             bookings = []
             for row in cursor.fetchall():
@@ -255,7 +267,7 @@ def get_user_bookings(user_srn: str) -> List[dict]:
             return bookings
             
     except sqlite3.Error as e:
-        logger.error(f"Database error while getting bookings for {user_srn}: {e}")
+        logger.error(f"Database error while getting bookings for {user_email}: {e}")
         return []
 
 def get_database_stats() -> dict:

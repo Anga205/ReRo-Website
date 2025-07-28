@@ -41,9 +41,9 @@ def book_slot(slot_id: int, booked_by: str) -> bool:
     
     return book_slot_in_db(slot_id, booked_by)
 
-def cancel_slot_booking(slot_id: int, user_srn: str = None) -> bool:
+def cancel_slot_booking(slot_id: int, user_email: str = None) -> bool:
     """Cancel a slot booking. Returns True if successful, False otherwise."""
-    return cancel_slot_in_db(slot_id, user_srn)
+    return cancel_slot_in_db(slot_id, user_email)
 
 def get_slot_summary() -> Dict:
     """Get a summary of all slots."""

@@ -5,7 +5,7 @@ from core.models import create_root_response, create_health_response
 from websocket.manager import get_connection_count
 from core.slot_manager import get_booked_slots_list
 from database.operations import get_database_stats, get_user_bookings
-from auth.pesu_auth import validate_user_credentials
+from auth.local_auth import validate_user_credentials
 from core.models import BookingRequest, CancellationRequest, LoginRequest
 from fastapi import HTTPException
 import logging
@@ -66,12 +66,12 @@ async def book_slot_http(booking_data: BookingRequest):
     from core.slot_manager import book_slot
     
     # Validate user credentials
-    user_srn = await validate_user_credentials(booking_data.username, booking_data.password)
-    if not user_srn:
+    user_email = await validate_user_credentials(booking_data.email, booking_data.password)
+    if not user_email:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Attempt to book the slot
-    success = book_slot(booking_data.slot_id, user_srn)
+    success = book_slot(booking_data.slot_id, user_email)
     
     if success:
         return {
@@ -88,12 +88,12 @@ async def cancel_slot_http(cancellation_data: CancellationRequest):
     from core.slot_manager import cancel_slot_booking
     
     # Validate user credentials
-    user_srn = await validate_user_credentials(cancellation_data.username, cancellation_data.password)
-    if not user_srn:
+    user_email = await validate_user_credentials(cancellation_data.email, cancellation_data.password)
+    if not user_email:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Attempt to cancel the slot
-    success = cancel_slot_booking(cancellation_data.slot_id, user_srn)
+    success = cancel_slot_booking(cancellation_data.slot_id, user_email)
     
     if success:
         return {
@@ -108,11 +108,11 @@ async def cancel_slot_http(cancellation_data: CancellationRequest):
 async def get_my_bookings(login_data: LoginRequest):
     """Get all bookings for the authenticated user."""
     # Validate user credentials
-    user_srn = await validate_user_credentials(login_data.username, login_data.password)
-    if not user_srn:
+    user_email = await validate_user_credentials(login_data.email, login_data.password)
+    if not user_email:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    bookings = get_user_bookings(user_srn)
+    bookings = get_user_bookings(user_email)
     return {
         "success": True,
         "bookings": bookings,

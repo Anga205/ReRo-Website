@@ -4,4 +4,5 @@ python-json-logger==2.0.7
 websockets==12.0
 httpx==0.25.2
 pydantic==2.5.0
+bcrypt==4.1.2
 # SQLite is included with Python standard library

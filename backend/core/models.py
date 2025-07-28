@@ -6,19 +6,24 @@ from pydantic import BaseModel
 
 class LoginRequest(BaseModel):
     """Model for login request."""
-    username: str
+    email: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    """Model for user registration request."""
+    email: str
     password: str
 
 class BookingRequest(BaseModel):
     """Model for booking request with authentication."""
     slot_id: int
-    username: str
+    email: str
     password: str
 
 class CancellationRequest(BaseModel):
     """Model for cancellation request with authentication."""
     slot_id: int
-    username: str
+    email: str
     password: str
 
 def create_slot_model(slot_id: int, start_time: str, end_time: str, is_booked: bool, booked_by: str = None) -> Dict[str, Any]:

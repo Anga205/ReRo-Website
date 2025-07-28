@@ -1,18 +1,19 @@
 # ReRo Website Backend - Slot Booking API
 
-A FastAPI-based WebSocket application for real-time slot booking with SQLite persistence, PESU authentication integration, and modular architecture. The system provides 1-hour time slots from 3 AM to 3 PM with user-specific booking management.
+A FastAPI-based WebSocket application for real-time slot booking with SQLite persistence, local user authentication, and modular architecture. The system provides 1-hour time slots from 3 AM to 3 PM with email-based user management and secure password hashing.
 
 ## 🔥 Key Features
 
-- **🔐 PESU Authentication**: Secure user authentication using PESU credentials
+- **🔐 Local Authentication**: Secure user registration and login with bcrypt password hashing
 - **⚡ Real-time Updates**: WebSocket-based communication for instant slot updates
-- **💾 SQLite Database**: Persistent storage with user-specific booking tracking
+- **💾 SQLite Database**: Persistent storage with email-based user management
 - **🏗️ Modular Architecture**: Clean, organized code structure for maintainability
-- **🚀 Performance Optimized**: In-memory authentication caching (30 minutes)
-- **🔒 User-specific Bookings**: Each booking tied to user's SRN
+- **🚀 Performance Optimized**: Efficient database operations and connection management
+- **🔒 Email-based Bookings**: Each booking tied to user's email address
 - **📡 Live Broadcasting**: All connected clients receive real-time updates
 - **📊 Health Monitoring**: Built-in health check and statistics endpoints
-- **🛡️ Security**: Proper authentication and authorization for all operations
+- **🛡️ Security**: bcrypt password hashing and secure authentication for all operations
+- **👤 User Registration**: Self-service account creation with email/password
 
 ## 📁 Project Structure
 
@@ -21,14 +22,14 @@ The application follows a modular architecture with organized modules:
 ```
 backend/
 ├── main.py                    # 🚀 Main FastAPI application (only file in root)
-├── requirements.txt           # 📋 Python dependencies (updated)
-├── ARCHITECTURE.md           # 📖 Detailed architecture documentation
+├── requirements.txt           # 📋 Python dependencies (includes bcrypt)
+├── LOCAL_AUTH_SUMMARY.md     # 📖 Local authentication system documentation
 ├── venv/                     # 🐍 Virtual environment
 ├── data/                     # 💾 Database directory (auto-created)
 │   └── rero.db              # SQLite database file
 ├── auth/                     # 🔐 Authentication module
 │   ├── __init__.py
-│   └── pesu_auth.py         # PESU API integration & caching
+│   └── local_auth.py        # Local authentication service with bcrypt
 ├── core/                     # ⚙️ Core application modules
 │   ├── __init__.py
 │   ├── config.py            # Configuration settings
@@ -40,7 +41,7 @@ backend/
 │   └── operations.py        # Database CRUD operations
 ├── routes/                   # 🛣️ HTTP route handlers
 │   ├── __init__.py
-│   ├── auth.py              # Authentication routes
+│   ├── auth.py              # Authentication routes (register/login)
 │   └── main.py              # Main API routes
 └── websocket/               # 🔌 WebSocket functionality
     ├── __init__.py
@@ -51,49 +52,63 @@ backend/
 
 ## 🔐 Authentication System
 
-### PESU Integration
-The system integrates with PESU's authentication API to validate user credentials. Users must provide their PESU username (SRN/PRN) and password to perform any booking operations.
+### Local User Management
+The system uses a local SQLite database to manage user accounts with secure password hashing. Users must register with an email and password to access booking functionality.
 
-### Authentication Caching
-- Successful logins are cached in memory for **30 minutes**
-- Reduces external API calls for better performance
-- Automatic cleanup of expired cache entries
-- Secure credential hashing for cache keys
+### Security Features
+- **bcrypt Password Hashing**: All passwords are securely hashed using bcrypt with salt
+- **Email-based Authentication**: Users authenticate with email/password credentials
+- **User Registration**: Self-service account creation with duplicate email prevention
+- **Secure Validation**: Password verification using bcrypt's secure comparison
+- **No Plain-text Storage**: Passwords are never stored in plain text
 
-### User-Specific Operations
-- Each booking is tied to the user's SRN
+### User Account Management
+- Each user account is tied to a unique email address
 - Users can only cancel their own bookings
 - Personal booking history available via API
+- Account registration prevents duplicate email addresses
 
 ## 💾 Database Schema
 
-The application uses SQLite with the following enhanced table structure:
+The application uses SQLite with the following table structure:
+
+### `users` Table
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,           -- User's email address (unique)
+    password_hash TEXT NOT NULL,          -- bcrypt hashed password
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ### `slots` Table
 ```sql
 CREATE TABLE slots (
-    id INTEGER PRIMARY KEY,           -- Slot ID (3-14 for 3AM-3PM)
-    start_time TEXT NOT NULL,         -- Start time (e.g., "09:00")
-    end_time TEXT NOT NULL,           -- End time (e.g., "10:00")
-    is_booked BOOLEAN DEFAULT FALSE,  -- Booking status
-    booked_by TEXT DEFAULT NULL,      -- 🆕 User's SRN who booked the slot
-    booked_at DATETIME DEFAULT NULL,  -- When the slot was booked
+    id INTEGER PRIMARY KEY,               -- Slot ID (3-14 for 3AM-3PM)
+    start_time TEXT NOT NULL,             -- Start time (e.g., "09:00")
+    end_time TEXT NOT NULL,               -- End time (e.g., "10:00")
+    is_booked BOOLEAN DEFAULT FALSE,      -- Booking status
+    booked_by TEXT DEFAULT NULL,          -- User's email who booked the slot
+    booked_at DATETIME DEFAULT NULL,      -- When the slot was booked
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ### Key Database Features
-- **User Tracking**: Each booking records the user's SRN
+- **Email-based User Management**: Unique email addresses for each user
+- **Secure Password Storage**: bcrypt hashed passwords with salt
+- **User Tracking**: Each booking records the user's email
 - **Automatic Migration**: Existing databases are automatically updated
 - **Data Integrity**: Database constraints prevent conflicts
-- **Audit Trail**: Booking timestamps for tracking
+- **Audit Trail**: User creation and booking timestamps
 
 ## 🚀 Installation & Setup
 
 ### Prerequisites
 - Python 3.8 or higher
-- Internet connection (for PESU API authentication)
+- Internet connection (for package installation)
 
 ### Quick Start
 
@@ -123,23 +138,54 @@ The database will be automatically created and initialized on first run.
 ### Dependencies
 - `fastapi==0.104.1` - Modern web framework
 - `uvicorn==0.24.0` - ASGI server
-- `httpx==0.25.2` - HTTP client for PESU API
+- `httpx==0.25.2` - HTTP client for API calls
 - `pydantic==2.5.0` - Data validation
 - `websockets==12.0` - WebSocket support
 - `python-json-logger==2.0.7` - Structured logging
+- `bcrypt==4.0.1` - Secure password hashing
 
 ## 🛣️ API Endpoints
 
 ### Authentication Routes
 
-#### `POST /auth/login`
-**Description**: Authenticate PESU users and get profile information
+#### `POST /auth/register`
+**Description**: Register a new user account with email and password
 
 **Request Body**:
 ```json
 {
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Success Response** (201):
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "user": {
+    "email": "user@example.com",
+    "created_at": "2025-01-28T10:30:00.123456"
+  }
+}
+```
+
+**Error Response** (400):
+```json
+{
+  "detail": "User with this email already exists"
+}
+```
+
+#### `POST /auth/login`
+**Description**: Authenticate users with email and password
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -149,12 +195,7 @@ The database will be automatically created and initialized on first run.
   "success": true,
   "message": "Login successful",
   "user": {
-    "name": "John Doe",
-    "srn": "PES1234567890",
-    "prn": "PES1234567890",
-    "program": "Bachelor of Technology",
-    "branch": "Computer Science and Engineering",
-    "campus": "RR"
+    "email": "user@example.com"
   }
 }
 ```
@@ -162,7 +203,7 @@ The database will be automatically created and initialized on first run.
 **Error Response** (401):
 ```json
 {
-  "detail": "Invalid credentials"
+  "detail": "Invalid email or password"
 }
 ```
 
@@ -225,14 +266,14 @@ The database will be automatically created and initialized on first run.
 ```
 
 #### `POST /book-slot`
-**Description**: Book a slot with authentication
+**Description**: Book a slot with email/password authentication
 
 **Request Body**:
 ```json
 {
   "slot_id": 5,
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -248,7 +289,7 @@ The database will be automatically created and initialized on first run.
 **Error Response** (401/400):
 ```json
 {
-  "detail": "Invalid credentials" // or "Slot 5 is not available"
+  "detail": "Invalid email or password" // or "Slot 5 is not available"
 }
 ```
 
@@ -259,8 +300,8 @@ The database will be automatically created and initialized on first run.
 ```json
 {
   "slot_id": 5,
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -279,8 +320,8 @@ The database will be automatically created and initialized on first run.
 **Request Body**:
 ```json
 {
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -293,7 +334,7 @@ The database will be automatically created and initialized on first run.
       "id": 5,
       "start_time": "05:00",
       "end_time": "06:00",
-      "booked_at": "2025-07-28 10:15:30"
+      "booked_at": "2025-01-28 10:15:30"
     }
   ],
   "total_bookings": 1
@@ -326,12 +367,12 @@ The database will be automatically created and initialized on first run.
 ### 🔌 WebSocket Endpoint
 
 #### `WS /slot-booking`
-**Description**: Main WebSocket endpoint for real-time slot booking with authentication
+**Description**: Main WebSocket endpoint for real-time slot booking with email/password authentication
 
 **Connection Flow**:
 1. Client connects to WebSocket
 2. Server automatically sends current slot status from database
-3. Client can send booking/cancellation requests with credentials
+3. Client can send booking/cancellation requests with email/password credentials
 4. Server validates authentication before processing
 5. Server updates database and broadcasts changes to all connected clients
 
@@ -344,8 +385,8 @@ The database will be automatically created and initialized on first run.
 {
   "type": "book_slot",
   "slot_id": 9,
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -354,8 +395,8 @@ The database will be automatically created and initialized on first run.
 {
   "type": "cancel_slot",
   "slot_id": 9,
-  "username": "PES1234567890",
-  "password": "your_password"
+  "email": "user@example.com",
+  "password": "securepassword123"
 }
 ```
 
@@ -416,7 +457,7 @@ The database will be automatically created and initialized on first run.
 {
   "type": "booking_response",
   "success": false,
-  "message": "Authentication failed. Invalid credentials.",
+  "message": "Authentication failed. Invalid email or password.",
   "slot_id": 9
 }
 ```
@@ -425,7 +466,7 @@ The database will be automatically created and initialized on first run.
 ```json
 {
   "type": "error",
-  "message": "Missing slot_id, username, or password in booking request"
+  "message": "Missing slot_id, email, or password in booking request"
 }
 ```
 
@@ -435,8 +476,8 @@ The database will be automatically created and initialized on first run.
 - **Slot Duration**: 1 hour each
 - **Slot IDs**: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 - **Format**: 24-hour format (e.g., "09:00" to "10:00")
-- **Persistence**: All bookings stored in SQLite with user tracking
-- **User Management**: Each booking tied to specific user's SRN
+- **Persistence**: All bookings stored in SQLite with email tracking
+- **User Management**: Each booking tied to specific user's email address
 
 ### Available Time Slots
 | Slot ID | Time Range | Example Usage |
@@ -468,16 +509,13 @@ The application can be configured through `core/config.py`:
 ### Environment Variables (Optional)
 
 ```bash
-# Override PESU authentication URL (default: uses official PESU API)
-export PESU_AUTH_URL="https://pesu-auth.onrender.com/authenticate"
-
-# Override authentication cache duration (default: 30 minutes)
-export CACHE_DURATION_MINUTES=30
-
 # Server configuration
 export HOST="0.0.0.0"
 export PORT=8000
 export LOG_LEVEL="info"
+
+# Database configuration
+export DATABASE_PATH="data/rero.db"
 ```
 
 ### Default Settings
@@ -487,55 +525,62 @@ export LOG_LEVEL="info"
 - **Log Level**: INFO
 - **CORS**: Enabled for all origins (development setting)
 - **Database**: SQLite with automatic initialization
-- **Cache Duration**: 30 minutes for authentication
-- **PESU API**: Official PESU authentication endpoint
+- **Password Hashing**: bcrypt with automatic salt generation
 
 ## 💾 Database Management
 
 ### Automatic Initialization
 - Database directory (`data/`) is created automatically if it doesn't exist
 - Database file (`data/rero.db`) is created on first run
-- Slots table is initialized with all 12 time slots
+- Users and slots tables are initialized automatically
 - If database exists, existing data is preserved and loaded
-- **Migration Support**: Existing databases automatically get the new `booked_by` column
+- **Migration Support**: Existing databases automatically get the new user management system
 
 ### Data Persistence
-- All slot bookings are immediately saved to SQLite
-- User SRN is recorded with each booking
+- All user accounts and slot bookings are immediately saved to SQLite
+- User email addresses are recorded with each booking
+- Password hashes are securely stored using bcrypt
 - Booking timestamps are recorded for audit trails
 - Database transactions ensure data consistency
 - No data loss on server restart
-- User-specific booking retrieval and management
+- Email-based booking retrieval and management
 
 ### User Data Handling
-- **Privacy First**: Only SRN is stored in database, no other personal data
-- **Authentication Cache**: User profiles cached in memory for 30 minutes only
-- **Secure Storage**: No passwords or sensitive data persisted
-- **GDPR Compliant**: Minimal data storage approach
+- **Privacy First**: Only email addresses and hashed passwords stored
+- **Secure Passwords**: bcrypt hashing with automatic salt generation
+- **No Plain-text**: Passwords never stored in readable format
+- **GDPR Compliant**: Minimal data storage approach with secure practices
 
 ## 🧪 Testing & Development
 
 ### Quick Testing with cURL
 
+#### Test User Registration
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"testpass123"}'
+```
+
 #### Test Authentication
 ```bash
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"YOUR_SRN","password":"YOUR_PASSWORD"}'
+  -d '{"email":"test@example.com","password":"testpass123"}'
 ```
 
 #### Test Slot Booking
 ```bash
 curl -X POST http://localhost:8000/book-slot \
   -H "Content-Type: application/json" \
-  -d '{"slot_id":9,"username":"YOUR_SRN","password":"YOUR_PASSWORD"}'
+  -d '{"slot_id":9,"email":"test@example.com","password":"testpass123"}'
 ```
 
 #### Check Your Bookings
 ```bash
 curl -X POST http://localhost:8000/my-bookings \
   -H "Content-Type: application/json" \
-  -d '{"username":"YOUR_SRN","password":"YOUR_PASSWORD"}'
+  -d '{"email":"test@example.com","password":"testpass123"}'
 ```
 
 ### WebSocket Testing
@@ -590,13 +635,13 @@ SELECT * FROM slots WHERE is_booked = 1;
 - WebSocket endpoint registration
 - Database initialization on startup
 
-### 🔐 `auth/pesu_auth.py`
-**Purpose**: PESU authentication integration
-- `PESUAuthService`: Main authentication service class
-- In-memory credential caching with expiration
-- External PESU API integration
-- Secure credential validation
-- Automatic cache cleanup
+### 🔐 `auth/local_auth.py`
+**Purpose**: Local user authentication service
+- `LocalAuthService`: Main authentication service class
+- User registration with duplicate email prevention
+- Secure password hashing using bcrypt
+- Password verification and user authentication
+- Email-based user validation
 
 ### ⚙️ `core/` Module
 
@@ -608,9 +653,10 @@ SELECT * FROM slots WHERE is_booked = 1;
 
 #### `models.py`
 - Pydantic data models for request/response validation
+- User registration and login models
 - WebSocket message creators
 - Response formatting functions
-- Type definitions
+- Type definitions for email-based authentication
 
 #### `slot_manager.py`
 - Core slot booking business logic
@@ -627,16 +673,18 @@ SELECT * FROM slots WHERE is_booked = 1;
 **Purpose**: Database operations and management
 - SQLite connection management
 - Database initialization and migration
-- CRUD operations for slots
+- User account creation and management
+- CRUD operations for slots with email-based tracking
 - User-specific booking queries
 - Database statistics and health checks
 
 ### 🛣️ `routes/` Module
 
 #### `auth.py`
-- Authentication endpoint (`/auth/login`)
-- User credential validation
-- Profile information retrieval
+- User registration endpoint (`/auth/register`)
+- User authentication endpoint (`/auth/login`)
+- Local database user validation
+- bcrypt password verification
 - Error handling for auth failures
 
 #### `main.py`
@@ -655,8 +703,8 @@ SELECT * FROM slots WHERE is_booked = 1;
 
 #### `handlers.py`
 - WebSocket message processing
-- Authentication validation for WS messages
-- Booking/cancellation logic
+- Email/password authentication validation for WS messages
+- Booking/cancellation logic with email tracking
 - Real-time update broadcasting
 
 #### `manager.py`
@@ -667,43 +715,50 @@ SELECT * FROM slots WHERE is_booked = 1;
 
 ## 🛡️ Security Features
 
-### Authentication Security
-- **No Password Storage**: Passwords never stored, only validated via PESU API
-- **Session Management**: 30-minute in-memory cache with automatic expiration
-- **Secure Hashing**: Credential cache keys use SHA-256 hashing
-- **API Rate Limiting**: Cached authentication reduces external API calls
+### Password Security
+- **bcrypt Hashing**: All passwords are hashed using bcrypt with automatic salt generation
+- **No Plain-text Storage**: Passwords are never stored in readable format
+- **Secure Verification**: Password verification uses bcrypt's secure comparison function
+- **Salt Generation**: Each password gets a unique salt for maximum security
+
+### User Account Security
+- **Email Uniqueness**: Prevents duplicate accounts with the same email
+- **Input Validation**: Email format and password strength validation
+- **Secure Registration**: User creation with proper error handling
+- **Authentication Logging**: Secure logging without credential exposure
 
 ### Data Privacy
-- **Minimal Data**: Only SRN stored with bookings
-- **No PII in Database**: Personal information never persisted
-- **Memory-Only Cache**: User profiles cached in memory only
-- **Automatic Cleanup**: Expired cache entries automatically removed
-
-### Network Security
-- **CORS Configuration**: Configurable cross-origin policies
-- **Input Validation**: Pydantic models validate all inputs
-- **Error Handling**: Proper error messages without data leakage
-- **HTTPS Ready**: Can be deployed with SSL/TLS termination
+- **Minimal Data**: Only email addresses and hashed passwords stored
+- **Local Storage**: All user data stays in the local SQLite database
+- **No External Dependencies**: No third-party authentication services
+- **GDPR Compliant**: Minimal personal data collection and storage
 
 ## ⚡ Performance Optimizations
 
-### Caching Strategy
-- **Authentication Cache**: 30-minute user session cache
-- **Database Connections**: Efficient SQLite connection management
-- **Memory Management**: Automatic cleanup of expired sessions
-- **Broadcast Optimization**: Efficient WebSocket message broadcasting
+### Database Optimization
+- **Efficient SQLite Operations**: Optimized queries for user and slot management
+- **Connection Management**: Proper database connection handling
+- **Indexed Queries**: Email-based lookups for fast user authentication
+- **Transaction Management**: Consistent database operations
+
+### Security Performance
+- **bcrypt Optimization**: Secure password hashing with reasonable performance
+- **Email Validation**: Fast email format validation
+- **User Lookup**: Efficient email-based user retrieval
+- **Session Handling**: Stateless authentication per request
 
 ### Scalability Features
 - **Modular Architecture**: Easy to scale individual components
-- **Database Optimization**: Indexed queries for fast lookups
+- **Local Database**: No external API dependencies for better reliability
 - **Connection Pooling**: WebSocket connection management
-- **Stateless Design**: Each request is independent (except cache)
+- **Efficient Broadcasting**: Optimized real-time message distribution
 
 ## 🔍 Error Handling
 
 ### Comprehensive Error Management
 - **Database Errors**: Graceful SQLite connection issue handling
-- **Authentication Errors**: Clear error messages for auth failures
+- **Authentication Errors**: Clear error messages for registration and login failures
+- **User Registration**: Proper handling of duplicate email attempts
 - **WebSocket Errors**: Proper disconnection and cleanup
 - **API Errors**: HTTP status codes with descriptive messages
 - **Validation Errors**: Pydantic validation with clear error details
@@ -711,9 +766,10 @@ SELECT * FROM slots WHERE is_booked = 1;
 ### Logging Strategy
 - **Structured Logging**: JSON-formatted logs for easy parsing
 - **Log Levels**: DEBUG, INFO, WARNING, ERROR levels
-- **Authentication Logging**: Secure logging without credential exposure
+- **Security Logging**: Authentication events without password exposure
 - **Performance Logging**: Connection and operation timing
 - **Error Tracking**: Detailed error context for debugging
+- **User Activity**: Registration and login activity tracking
 
 ## 📊 Monitoring & Health Checks
 
@@ -768,10 +824,6 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 #### Environment Variables for Production
 ```bash
-# Security
-export PESU_AUTH_URL="https://pesu-auth.onrender.com/authenticate"
-export CACHE_DURATION_MINUTES=30
-
 # Server
 export HOST="0.0.0.0"
 export PORT=8000
@@ -782,6 +834,9 @@ export DATABASE_PATH="/app/data/rero.db"
 
 # Logging
 export LOG_LEVEL="info"
+
+# Security (optional)
+export BCRYPT_ROUNDS=12  # Higher for more security, lower for performance
 ```
 
 ### Reverse Proxy Configuration
@@ -870,26 +925,32 @@ chmod 644 data/rero.db
 mkdir -p data
 ```
 
-#### PESU API Connection Issues
+#### User Registration Issues
 ```bash
-# Test PESU API connectivity
-curl -X POST https://pesu-auth.onrender.com/authenticate \
+# Test user registration
+curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"test","password":"test"}'
+  -d '{"email":"test@example.com","password":"testpass123"}'
 
-# Check DNS resolution
-nslookup pesu-auth.onrender.com
+# Check if user already exists
+grep "email" data/rero.db  # or use SQLite browser
 ```
 
-#### Memory Issues (High Load)
+#### Authentication Issues
 ```bash
-# Monitor memory usage
-ps aux | grep python
-htop
+# Test login endpoint
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"testpass123"}'
 
-# Clear authentication cache manually (restart server)
-# Or reduce CACHE_DURATION_MINUTES
+# Check user table
+sqlite3 data/rero.db "SELECT * FROM users;"
 ```
+
+#### Password Issues
+- Ensure passwords meet minimum requirements (6+ characters)
+- Check for proper bcrypt installation: `pip list | grep bcrypt`
+- Verify password hashing in logs (without exposing actual passwords)
 
 ### Debug Mode
 ```bash
@@ -904,10 +965,13 @@ uvicorn main:app --reload --log-level debug
 ### Log Analysis
 ```bash
 # Filter authentication logs
-grep "authentication" logs/app.log
+grep "authentication\|registration\|login" logs/app.log
 
 # Filter booking operations
 grep "booking\|cancellation" logs/app.log
+
+# Monitor user activity
+grep "user" logs/app.log
 
 # Monitor real-time logs
 tail -f logs/app.log
@@ -916,7 +980,10 @@ tail -f logs/app.log
 ## 📈 Future Enhancements
 
 ### Planned Features
-- [ ] **Email Notifications**: Booking confirmations via email
+- [ ] **JWT Tokens**: Stateless authentication with token-based sessions
+- [ ] **Password Reset**: Email-based password recovery system
+- [ ] **Email Verification**: Confirm email addresses during registration
+- [ ] **Account Management**: Update email/password endpoints
 - [ ] **Admin Dashboard**: Web-based administration interface
 - [ ] **Slot Reservations**: Time-limited reservations before booking
 - [ ] **Recurring Bookings**: Weekly/monthly booking patterns
@@ -924,37 +991,49 @@ tail -f logs/app.log
 - [ ] **API Rate Limiting**: Request throttling for abuse prevention
 - [ ] **Audit Logging**: Comprehensive audit trail
 - [ ] **Multi-tenant Support**: Multiple organizations/campuses
-- [ ] **Mobile App Integration**: REST API for mobile apps
+- [ ] **Mobile App Integration**: Enhanced REST API for mobile apps
 - [ ] **Advanced Analytics**: Booking patterns and usage statistics
 
+### Authentication Improvements
+- [ ] **Two-Factor Authentication**: SMS/email-based 2FA
+- [ ] **OAuth Integration**: Google/GitHub OAuth support
+- [ ] **Session Management**: Persistent login sessions
+- [ ] **Account Lockout**: Brute force protection
+- [ ] **Password Strength**: Enhanced password requirements
+- [ ] **User Roles**: Admin/user role-based permissions
+
 ### Performance Improvements
-- [ ] **Redis Caching**: External cache for authentication
-- [ ] **Database Optimization**: PostgreSQL for production
+- [ ] **Redis Caching**: External cache for session management
+- [ ] **Database Optimization**: PostgreSQL for production scaling
 - [ ] **CDN Integration**: Static asset optimization
 - [ ] **Load Balancing**: Multiple server instances
 - [ ] **Connection Pooling**: Advanced database connection management
+- [ ] **Password Hashing Optimization**: Adaptive bcrypt work factors
 
 ### Security Enhancements
-- [ ] **JWT Tokens**: Stateless authentication tokens
-- [ ] **Role-based Access**: Admin/user role separation
-- [ ] **IP Whitelisting**: Network-level access control
-- [ ] **Encryption**: Database encryption at rest
+- [ ] **Enhanced Encryption**: Database encryption at rest
 - [ ] **Security Headers**: HTTP security headers implementation
+- [ ] **Input Sanitization**: Advanced input validation and sanitization
+- [ ] **CSRF Protection**: Cross-site request forgery protection
+- [ ] **Rate Limiting**: Per-user and per-IP rate limiting
+- [ ] **Security Auditing**: Regular security assessment and monitoring
 
 ## 🆘 Support & Contributing
 
 ### Getting Help
-1. **Documentation**: Check this README and ARCHITECTURE.md
+1. **Documentation**: Check this README and LOCAL_AUTH_SUMMARY.md
 2. **Logs**: Review application logs for error details
 3. **Health Check**: Use `/health` endpoint to verify system status
 4. **Database**: Inspect SQLite database for data integrity
+5. **Authentication Testing**: Use test endpoints to verify user registration/login
 
 ### Development Guidelines
 - **Code Style**: Follow PEP 8 Python style guidelines
 - **Type Hints**: Include type annotations for all functions
 - **Documentation**: Update docstrings for new functions
-- **Testing**: Test all authentication flows
 - **Security**: Never log passwords or sensitive data
+- **Testing**: Test all authentication and booking flows
+- **Password Security**: Always use bcrypt for password hashing
 
 ### Contribution Process
 1. Fork the repository
@@ -976,7 +1055,17 @@ pip install -r requirements.txt
 # Run
 python main.py
 
-# Test
+# Test User Registration
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"testpass123"}'
+
+# Test Authentication
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"testpass123"}'
+
+# Health Check
 curl http://localhost:8000/health
 
 # WebSocket Test
@@ -987,13 +1076,14 @@ wscat -c ws://localhost:8000/slot-booking
 - **API Documentation**: `http://localhost:8000/docs` (Swagger UI)
 - **Health Check**: `http://localhost:8000/health`
 - **WebSocket**: `ws://localhost:8000/slot-booking`
-- **Login**: `POST http://localhost:8000/auth/login`
+- **User Registration**: `POST http://localhost:8000/auth/register`
+- **User Login**: `POST http://localhost:8000/auth/login`
 
 ### Important Files
 - `main.py` - Application entry point
-- `data/rero.db` - SQLite database
-- `auth/pesu_auth.py` - Authentication service
-- `requirements.txt` - Dependencies
-- `ARCHITECTURE.md` - Detailed architecture docs
+- `data/rero.db` - SQLite database (users + slots)
+- `auth/local_auth.py` - Local authentication service
+- `requirements.txt` - Dependencies (includes bcrypt)
+- `LOCAL_AUTH_SUMMARY.md` - Local authentication documentation
 
-**The ReRo Website Backend is now production-ready with comprehensive authentication, user management, and a scalable modular architecture! 🚀**
+**The ReRo Website Backend is now production-ready with secure local authentication, user registration, and comprehensive email-based user management! 🚀🔐**
