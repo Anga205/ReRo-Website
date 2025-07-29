@@ -12,7 +12,7 @@ A comprehensive, full-stack web application for real-time slot booking with inte
 - **🔐 Authentication Flow**: Complete login/register with form validation and error handling
 - **🎯 Color-coded Slots**: Visual indicators (🟢 Available, 🔴 Booked, 🔵 Your booking)
 - **🔄 Live Connection Status**: Real-time WebSocket connection indicators
-- **📊 Interactive Slot Grid**: 12 time slots (3 AM - 3 PM) with one-click booking/cancellation
+- **📊 Interactive Slot Grid**: 24 time slots (24-hour coverage) with one-click booking/cancellation
 - **🎭 Smooth Animations**: Material-UI transitions and loading states
 - **� Client-side Routing**: React Router for SPA navigation
 - **⚡ Hot Reload**: Vite development server with instant updates
@@ -20,15 +20,19 @@ A comprehensive, full-stack web application for real-time slot booking with inte
 
 ### ⚙️ Backend Features
 - **🔌 Arduino Device Management**: Full hardware integration with 10+ supported device types
-- **🚀 FastAPI Framework**: Modern async Python API with automatic OpenAPI docs
+- **� Real-time Serial Reading**: Live WebSocket streams for Arduino serial output monitoring
+- **�🚀 FastAPI Framework**: Modern async Python API with automatic OpenAPI docs
 - **🔐 Local Authentication**: bcrypt password hashing with secure user management
 - **💾 SQLite Database**: Persistent storage with automatic schema management
-- **🌐 WebSocket Server**: Real-time bidirectional communication for live updates
-- **🛡️ Security**: JWT-style authentication, input validation, and SQL injection protection
+- **🌐 Dual WebSocket System**: Slot booking + device serial communication endpoints
+- **🛡️ Security**: Slot-based authorization, input validation, and SQL injection protection
 - **📊 Device Detection**: Automatic Arduino Uno, Mega, and ESP32 recognition
 - **⚡ Code Compilation**: arduino-cli integration for multi-board compilation
-- **📁 File Management**: Automatic temporary file cleanup and project management
+- **� Secure Code Upload**: Authentication + slot validation for device programming
+- **🔄 Serial Port Management**: Exclusive access handling for upload/read operations
+- **�📁 File Management**: Automatic temporary file cleanup and project management
 - **📈 Health Monitoring**: System statistics and connection monitoring
+- **🎯 Thread-Safe Operations**: Concurrent serial reading with broadcast messaging
 - **🔄 CORS Support**: Cross-origin resource sharing for frontend-backend communication
 - **📝 Comprehensive Logging**: Structured logging with different levels across all modules
 
@@ -43,9 +47,11 @@ A comprehensive, full-stack web application for real-time slot booking with inte
 ### Backend
 - **FastAPI** with Python 3.8+
 - **SQLite** database
-- **WebSocket** support
+- **WebSocket** support (dual endpoints)
+- **PySerial** for Arduino communication
 - **arduino-cli** for device management
 - **bcrypt** for password security
+- **Threading** for concurrent operations
 
 ## 🚀 Quick Start
 
@@ -155,12 +161,12 @@ frontend/src/
 
 ### ⚙️ Backend Architecture & Modules
 
-The backend follows a clean, modular FastAPI architecture with 8+ specialized modules:
+The backend follows a clean, modular FastAPI architecture with 10+ specialized modules:
 
 ```
 backend/
 ├── main.py                # 🚀 FastAPI application entry point
-├── requirements.txt       # 📋 Python dependencies (12+ packages)
+├── requirements.txt       # 📋 Python dependencies (15+ packages)
 ├── data/                  # 💾 Database and file storage
 │   ├── rero.db           # SQLite database file
 │   └── arduino_projects/ # Temporary Arduino project directories
@@ -181,13 +187,15 @@ backend/
 │   ├── auth.py           # Authentication routes (login, register)
 │   ├── devices.py        # Arduino device management routes
 │   └── __init__.py
-├── websocket/             # 🔌 Real-time communication (3 modules)
-│   ├── endpoints.py      # WebSocket endpoint definitions
+├── websocket/             # 🔌 Real-time communication (4 modules)
+│   ├── endpoints.py      # Slot booking WebSocket endpoint
+│   ├── device_endpoints.py # Device serial reading WebSocket endpoint
 │   ├── handlers.py       # WebSocket message processing
 │   ├── manager.py        # Connection and broadcast management
 │   └── __init__.py
-└── device_handler/       # 🔌 Arduino integration (2 modules)
+└── device_handler/       # 🔌 Arduino integration (4 modules)
     ├── get_devices.py    # Hardware device detection and listing
+    ├── serial_manager.py # Real-time serial communication management
     ├── utils.py          # Board configurations and file management
     └── __init__.py
 ```
@@ -195,14 +203,18 @@ backend/
 #### ⚙️ Backend Technology Features
 - **FastAPI Framework**: Async Python with automatic OpenAPI/Swagger docs
 - **SQLite Database**: Lightweight, file-based database with ACID compliance
-- **WebSocket Support**: Real-time bidirectional communication
+- **Dual WebSocket Support**: Slot booking + device serial communication endpoints
+- **PySerial Integration**: Real-time Arduino serial communication at 9600 baud
+- **Thread-Safe Operations**: Concurrent serial reading with broadcast messaging
 - **bcrypt Security**: Password hashing with salt and secure verification
 - **arduino-cli Integration**: Command-line interface for Arduino compilation/upload
+- **Serial Port Management**: Exclusive access handling for upload/read operations
 - **Pydantic Models**: Data validation and serialization with type hints
 - **CORS Middleware**: Cross-origin resource sharing for web clients
 - **Structured Logging**: Multi-level logging across all modules
 - **Modular Design**: Separation of concerns with clean interfaces
 - **Error Handling**: Comprehensive exception handling and user feedback
+- **Resource Cleanup**: Automatic connection and file management
 
 ## 🔌 Arduino Device Management
 
@@ -348,6 +360,171 @@ Content-Type: application/json
 - **📊 Detailed Feedback**: Memory usage, compile errors, upload status
 - **🔍 Device Validation**: Ensures hardware exists before attempting operations
 
+## 📡 Real-time Device Serial Communication
+
+### 🌐 WebSocket Endpoint for Device Reading
+
+#### `/devices/read/{device_number}`
+
+**Real-time serial output monitoring** - Connect to Arduino devices and receive live serial data at 9600 baud.
+
+**Features**:
+- ✅ **Authentication Required**: Email/password validation
+- ✅ **Slot-based Authorization**: Must have current time slot booked
+- ✅ **Real-time Updates**: Instant serial output broadcasting
+- ✅ **Multi-client Support**: Multiple users can read from same device
+- ✅ **Automatic Cleanup**: Connections properly managed
+
+### 📱 Usage Examples
+
+#### JavaScript WebSocket Client
+```javascript
+const deviceNumber = 0;
+const ws = new WebSocket(`ws://localhost:8000/devices/read/${deviceNumber}`);
+
+ws.onopen = () => {
+    // Send authentication
+    ws.send(JSON.stringify({
+        email: "user@example.com",
+        password: "password123"
+    }));
+};
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    switch(data.type) {
+        case 'error':
+            console.error('Error:', data.message);
+            break;
+        case 'connection_established':
+            console.log('Connected to:', data.device_info);
+            break;
+        case 'serial_output':
+            console.log('Device output:', data.output);
+            break;
+    }
+};
+```
+
+#### Python AsyncIO Client
+```python
+import asyncio
+import websockets
+import json
+
+async def read_device_serial():
+    uri = "ws://localhost:8000/devices/read/0"
+    
+    async with websockets.connect(uri) as websocket:
+        # Authenticate
+        await websocket.send(json.dumps({
+            "email": "user@example.com",
+            "password": "password123"
+        }))
+        
+        # Listen for serial output
+        async for message in websocket:
+            data = json.loads(message)
+            if data['type'] == 'serial_output':
+                print(f"Device {data['device_number']}: {data['output']}")
+
+asyncio.run(read_device_serial())
+```
+
+### 📨 WebSocket Message Types
+
+#### Client → Server (Authentication)
+```json
+{
+    "email": "user@example.com",
+    "password": "password123"
+}
+```
+
+#### Server → Client Messages
+
+**Connection Established**:
+```json
+{
+    "type": "connection_established",
+    "device_number": 0,
+    "device_info": {
+        "model": "uno",
+        "port": "/dev/ttyUSB0"
+    },
+    "message": "Connected to device 0 (uno on /dev/ttyUSB0)"
+}
+```
+
+**Serial Output**:
+```json
+{
+    "type": "serial_output",
+    "device_number": 0,
+    "output": "Hello from Arduino!\nLED ON\nLED OFF\n",
+    "timestamp": "2025-07-29T12:34:56.789Z"
+}
+```
+
+**Error Messages**:
+```json
+{
+    "type": "error",
+    "message": "Authentication failed"
+}
+```
+
+### 🛡️ Security & Access Control
+
+**Error Conditions**:
+- **Invalid Device**: Device number doesn't exist → Immediate error + close
+- **Authentication Failed**: Invalid credentials → Error + close
+- **No Slot Booked**: User hasn't booked current time slot → Error + close
+- **Device Busy**: Serial port in use by upload → Graceful handling
+
+### ⚡ Integration with Code Upload
+
+When code is uploaded via `/devices/upload/{device_number}`:
+1. **Serial reading automatically stops** (prevents port conflicts)
+2. **Device output reset to empty** (fresh start)
+3. **New code execution begins**
+4. **Serial reading can be restarted** via WebSocket connection
+
+### 🔧 Arduino Code for Serial Output
+
+```cpp
+void setup() {
+    Serial.begin(9600);
+    pinMode(LED_BUILTIN, OUTPUT);
+    Serial.println("Device started!");
+    Serial.println("Running ReRo demo code");
+}
+
+void loop() {
+    digitalWrite(LED_BUILTIN, HIGH);
+    Serial.println("LED ON");
+    delay(1000);
+    
+    digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("LED OFF");
+    delay(1000);
+    
+    Serial.print("Uptime: ");
+    Serial.print(millis() / 1000);
+    Serial.println(" seconds");
+}
+```
+
+### 📊 Performance Characteristics
+
+- **Baud Rate**: 9600 (configurable)
+- **Buffer Size**: 10,000 characters per device
+- **Latency**: Sub-second real-time delivery
+- **Concurrent Connections**: Multiple users per device
+- **Memory Usage**: Bounded by buffer limits
+- **Thread Safety**: Full concurrent operation support
+
 ## 🔐 Authentication & Security
 
 ### 🔒 User Management System
@@ -418,16 +595,21 @@ CREATE TABLE slots (
 ## ⚡ Real-time Features & Slot Management
 
 ### 🌐 WebSocket Communication
-- **📡 Bidirectional Messaging**: Real-time client-server communication
+- **📡 Dual WebSocket Endpoints**: Slot booking + device serial communication
 - **🔄 Auto-reconnection**: Automatic reconnection on connection loss
 - **📊 Connection Monitoring**: Live connection count and status tracking
+- **🎯 Instant Updates**: Real-time slot status + serial output delivery
+- **💬 Message Broadcasting**: Efficient distribution to connected clients
+- **🔍 Connection Management**: Add/remove connections with cleanup
+- **⚡ Low Latency**: Sub-second update delivery across the network
+- **🛡️ Authenticated Streams**: Secure access to both slot and device data
 - **🎯 Instant Updates**: Immediate slot status propagation to all clients
 - **💬 Message Broadcasting**: Efficient message distribution to connected clients
 - **🔍 Connection Management**: Add/remove connections with cleanup
 - **⚡ Low Latency**: Sub-second update delivery across the network
 
 ### 🕐 Slot Management System
-- **📅 12 Time Slots**: Complete day coverage from 3 AM to 3 PM (1-hour intervals)
+- **📅 24 Time Slots**: Complete 24-hour coverage (00:00 - 23:59) with 1-hour intervals
 - **🎨 Visual Status Indicators**: 
   - 🟢 **Available** - Open for booking
   - 🔴 **Booked by Others** - Unavailable  
@@ -516,7 +698,9 @@ GET /health
 
 ### 🔄 WebSocket Message Types
 
-#### 📤 Client → Server Messages
+#### � Slot Booking Endpoint (`/slot-booking`)
+
+**Client → Server Messages**:
 ```javascript
 // Book a slot
 {
@@ -535,7 +719,7 @@ GET /health
 }
 ```
 
-#### � Server → Client Messages
+**Server → Client Messages**:
 ```javascript
 // Slot status update
 {
@@ -559,6 +743,42 @@ GET /health
   "type": "error",
   "message": "Slot is already booked",
   "error_code": "SLOT_UNAVAILABLE"
+}
+```
+
+#### 📡 Device Serial Endpoint (`/devices/read/{device_number}`)
+
+**Client → Server Messages**:
+```javascript
+// Authentication (sent immediately after connection)
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+**Server → Client Messages**:
+```javascript
+// Connection established
+{
+  "type": "connection_established",
+  "device_number": 0,
+  "device_info": {"model": "uno", "port": "/dev/ttyUSB0"},
+  "message": "Connected to device 0"
+}
+
+// Real-time serial output
+{
+  "type": "serial_output",
+  "device_number": 0,
+  "output": "LED ON\nLED OFF\nUptime: 45 seconds\n",
+  "timestamp": "2025-07-29T12:34:56.789Z"
+}
+
+// Error responses
+{
+  "type": "error",
+  "message": "Authentication failed"
 }
 ```
 
@@ -779,11 +999,45 @@ npm run lint
 npx tsc --noEmit
 ```
 
+#### 📡 Device WebSocket Testing
+
+**Comprehensive Test Suite**:
+```bash
+cd backend
+python test_websocket_device.py  # Full automated testing
+```
+
+**Manual WebSocket Testing**:
+```bash
+cd backend
+python test_websocket_client.py  # Interactive testing
+```
+
+**Browser Console Testing**:
+```javascript
+// Test device serial WebSocket in browser console
+const ws = new WebSocket('ws://localhost:8000/devices/read/0');
+ws.onopen = () => ws.send(JSON.stringify({
+  email: 'test@example.com', 
+  password: 'testpassword123'
+}));
+ws.onmessage = e => console.log(JSON.parse(e.data));
+```
+
+**Test Coverage**:
+- ✅ Device authentication and authorization
+- ✅ Serial output reading and broadcasting
+- ✅ Connection management and cleanup
+- ✅ Error handling for all edge cases
+- ✅ Integration with code upload functionality
+
 ### 🔍 WebSocket Testing
 
 #### 📡 Using Browser Developer Tools
+
+**Slot Booking WebSocket**:
 ```javascript
-// Connect to WebSocket
+// Connect to slot booking WebSocket
 const ws = new WebSocket('ws://localhost:8000/slot-booking');
 
 // Listen for messages
@@ -808,16 +1062,44 @@ ws.send(JSON.stringify({
 }));
 ```
 
+**Device Serial WebSocket**:
+```javascript
+// Connect to device serial WebSocket
+const deviceWs = new WebSocket('ws://localhost:8000/devices/read/0');
+
+// Send authentication
+deviceWs.onopen = () => {
+  deviceWs.send(JSON.stringify({
+    email: 'test@example.com',
+    password: 'securepassword123'
+  }));
+};
+
+// Listen for serial output
+deviceWs.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type === 'serial_output') {
+    console.log('Arduino output:', data.output);
+  }
+};
+```
+
 #### 🔌 Using wscat (WebSocket client)
 ```bash
 # Install wscat
 npm install -g wscat
 
-# Connect to WebSocket endpoint
+# Connect to slot booking endpoint
 wscat -c ws://localhost:8000/slot-booking
 
 # Send booking message
 {"type":"book_slot","slot_id":9,"user_email":"test@example.com","password":"securepassword123"}
+
+# Connect to device serial endpoint
+wscat -c ws://localhost:8000/devices/read/0
+
+# Send authentication
+{"email":"test@example.com","password":"securepassword123"}
 ```
 
 ### 🐛 Debugging & Logging
@@ -863,6 +1145,15 @@ npx vite-bundle-analyzer dist
 
 ## 📝 Recent Changes
 
+### 🆕 Device Serial Reading WebSocket (Latest)
+- **Real-time Serial Communication**: New `/devices/read/{device_number}` WebSocket endpoint
+- **Live Arduino Output**: Stream serial data at 9600 baud to authenticated users
+- **Secure Access Control**: Authentication + slot validation for device access
+- **Concurrent Multi-user Support**: Multiple users can read from same device
+- **Integration with Upload**: Automatic serial disconnect during code upload
+- **Thread-safe Operations**: Concurrent serial reading with broadcast messaging
+- **Comprehensive Testing**: Full test suite with automated and manual testing tools
+
 ### ✨ Frontend Refactoring
 - **Modular Components**: Split large page components into focused, reusable modules
 - **Improved Maintainability**: Better code organization and separation of concerns
@@ -876,8 +1167,10 @@ npx vite-bundle-analyzer dist
 - **Automatic Cleanup**: Temporary file management for security
 
 ### 🛡️ Security Enhancements
-- **Slot-based Access Control**: Users can only upload during booked slots
-- **Device Validation**: Ensures target devices exist before upload attempts
+- **Dual WebSocket Security**: Authentication required for both slot and device endpoints
+- **Slot-based Access Control**: Users can only upload/read during booked slots
+- **Device Validation**: Ensures target devices exist before operations
+- **Serial Port Management**: Exclusive access handling prevents conflicts
 - **Credential Verification**: Secure authentication for all sensitive operations
 
 ## 🤝 Contributing

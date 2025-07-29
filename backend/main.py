@@ -15,6 +15,7 @@ from routes.main import main_router
 from routes.auth import auth_router
 from routes.devices import devices_router
 from websocket.endpoints import websocket_endpoint
+from websocket.device_endpoints import device_read_websocket_endpoint
 from database.operations import initialize_database
 
 # Configure logging
@@ -44,8 +45,9 @@ app.include_router(main_router)
 app.include_router(auth_router)
 app.include_router(devices_router)
 
-# Register WebSocket endpoint
+# Register WebSocket endpoints
 app.websocket("/slot-booking")(websocket_endpoint)
+app.websocket("/devices/read/{device_number}")(device_read_websocket_endpoint)
 
 if __name__ == "__main__":
     import uvicorn

@@ -118,3 +118,25 @@ async def get_my_bookings(login_data: LoginRequest):
         "bookings": bookings,
         "total_bookings": len(bookings)
     }
+
+@main_router.post("/slots/user")
+async def get_user_current_slot(login_data: LoginRequest):
+    """Get the current slot booked by the authenticated user."""
+    # Validate user credentials
+    user_email = await validate_user_credentials(login_data.email, login_data.password)
+    if not user_email:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    bookings = get_user_bookings(user_email)
+    print(bookings)
+    
+    # Return the first booking slot (assuming one booking per user)
+    current_slot = None
+    if bookings:
+        current_slot = bookings[0]["id"]
+    
+    return {
+        "success": True,
+        "slot": current_slot,
+        "has_booking": current_slot is not None
+    }

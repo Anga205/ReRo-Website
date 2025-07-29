@@ -2,6 +2,12 @@ export interface User {
   email: string;
 }
 
+export interface Device {
+  serial_number: number;
+  port: string;
+  model: string;
+}
+
 export interface Slot {
   id: number;
   start_time: string;

@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Box, Button } from '@mui/material';
+import { Code } from '@mui/icons-material';
 
 interface AppHeaderProps {
   userEmail: string;
@@ -24,6 +26,23 @@ const AppHeader: React.FC<AppHeaderProps> = ({ userEmail, isConnected, onLogout 
               {isConnected ? 'Connected' : 'Disconnected'}
             </Typography>
           </Box>
+          <Button
+            component={Link}
+            to="/arduino"
+            variant="outlined"
+            size="small"
+            startIcon={<Code />}
+            sx={{ 
+              color: '#34d399',
+              borderColor: '#34d399',
+              '&:hover': { 
+                backgroundColor: '#10b98120',
+                borderColor: '#10b981'
+              }
+            }}
+          >
+            Arduino
+          </Button>
           <Button
             color="inherit"
             onClick={onLogout}

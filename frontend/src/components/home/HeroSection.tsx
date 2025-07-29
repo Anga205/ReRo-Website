@@ -23,21 +23,44 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isAuthenticated, userEmail, o
           <Typography variant="h6" className="text-blue-400 mb-4">
             Welcome back, <span className="font-semibold">{userEmail}</span>!
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={onGetStarted}
-            className="px-8 py-3 text-lg font-semibold rounded-lg"
-            sx={{
-              backgroundColor: '#3b82f6',
-              '&:hover': { backgroundColor: '#2563eb' },
-              padding: '14px 32px',
-              fontSize: '1.1rem',
-              fontWeight: 600,
-            }}
-          >
-            Go to Booking
-          </Button>
+          <Box className="space-x-4">
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onGetStarted}
+              className="px-8 py-3 text-lg font-semibold rounded-lg"
+              sx={{
+                backgroundColor: '#3b82f6',
+                '&:hover': { backgroundColor: '#2563eb' },
+                padding: '14px 32px',
+                fontSize: '1.1rem',
+                fontWeight: 600,
+              }}
+            >
+              Go to Booking
+            </Button>
+            <Button
+              component={Link}
+              to="/arduino"
+              variant="outlined"
+              size="large"
+              className="px-8 py-3 text-lg font-semibold rounded-lg"
+              sx={{
+                borderColor: '#10b981',
+                color: '#34d399',
+                '&:hover': { 
+                  backgroundColor: '#10b98120', 
+                  borderColor: '#059669',
+                  color: '#6ee7b7'
+                },
+                padding: '14px 32px',
+                fontSize: '1.1rem',
+                fontWeight: 600,
+              }}
+            >
+              Arduino Editor
+            </Button>
+          </Box>
         </Box>
       ) : (
         <Box className="space-x-4">

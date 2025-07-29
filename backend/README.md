@@ -1,6 +1,6 @@
 # ReRo Website Backend - Slot Booking API
 
-A FastAPI-based WebSocket application for real-time slot booking with SQLite persistence, local user authentication, and modular architecture. The system provides 1-hour time slots from 3 AM to 3 PM with email-based user management and secure password hashing.
+A FastAPI-based WebSocket application for real-time slot booking with SQLite persistence, local user authentication, and modular architecture. The system provides 1-hour time slots covering a full 24-hour day (00:00-23:59) with email-based user management and secure password hashing.
 
 ## 🔥 Key Features
 
@@ -472,10 +472,10 @@ The database will be automatically created and initialized on first run.
 
 ## ⏰ Slot System
 
-- **Time Range**: 3 AM to 3 PM (12 slots total)
+- **Time Range**: 24-hour coverage (00:00 - 23:59) - (24 slots total)
 - **Slot Duration**: 1 hour each
-- **Slot IDs**: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
-- **Format**: 24-hour format (e.g., "09:00" to "10:00")
+- **Slot IDs**: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
+- **Format**: 24-hour format (e.g., "09:00" to "10:00", "23:00" to "00:00")
 - **Persistence**: All bookings stored in SQLite with email tracking
 - **User Management**: Each booking tied to specific user's email address
 

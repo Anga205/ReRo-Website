@@ -28,7 +28,8 @@ def get_booked_slots_list() -> List[int]:
 
 def is_slot_available(slot_id: int) -> bool:
     """Check if a slot is available for booking."""
-    valid_range = SLOT_CONFIG["start_hour"] <= slot_id <= (SLOT_CONFIG["end_hour"] - 1)
+    # Valid slot IDs are 0-23 for 24-hour format
+    valid_range = SLOT_CONFIG["start_hour"] <= slot_id < SLOT_CONFIG["end_hour"]
     if not valid_range:
         return False
     

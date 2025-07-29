@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from device_handler.get_devices import connected_devices, detect_serial_devices
 from device_handler.utils import ArduinoBoardConfig, CodeManager, DeviceValidator
+from device_handler.serial_manager import serial_manager
 from auth.local_auth import LocalAuthService
 from database.operations import get_database_connection
 
@@ -232,9 +233,11 @@ async def upload_code(device_number: int, request: CodeUploadRequest):
         # Check if user has booked the current time slot
         current_slot = get_current_time_slot()
         if not is_user_slot_booked(request.email, current_slot):
+            # Format time display properly for 24-hour format
+            end_hour = (current_slot + 1) % 24
             raise HTTPException(
                 status_code=403, 
-                detail=f"You must have booked the current time slot ({current_slot}:00-{current_slot+1}:00) to upload code"
+                detail=f"You must have booked the current time slot ({current_slot:02d}:00-{end_hour:02d}:00) to upload code"
             )
         
         # Refresh device list and validate device number
@@ -252,6 +255,10 @@ async def upload_code(device_number: int, request: CodeUploadRequest):
         device = connected_devices[device_number]
         device_model = device["model"]
         device_port = device["port"]
+        
+        # Stop serial reading for this device (only one process can access serial port)
+        serial_manager.stop_reading_device(device_number)
+        serial_manager.reset_device_output(device_number)
         
         # Upload code to device
         upload_result = upload_arduino_code(request.code, device_port, device_model, project_id)

@@ -84,7 +84,9 @@ def populate_initial_slots(cursor: sqlite3.Cursor) -> None:
     
     for hour in range(SLOT_CONFIG["start_hour"], SLOT_CONFIG["end_hour"]):
         start_time = f"{hour:02d}:00"
-        end_time = f"{(hour + 1):02d}:00"
+        # Handle 24-hour format properly (23:00-24:00 becomes 23:00-00:00)
+        end_hour = (hour + 1) % 24
+        end_time = f"{end_hour:02d}:00"
         slots_data.append((hour, start_time, end_time, False))
     
     cursor.executemany(
@@ -92,7 +94,7 @@ def populate_initial_slots(cursor: sqlite3.Cursor) -> None:
         slots_data
     )
     
-    logger.info(f"Populated {len(slots_data)} initial slots")
+    logger.info(f"Populated {len(slots_data)} initial slots (24-hour format)")
 
 def load_booked_slots() -> Set[int]:
     """Load booked slot IDs from the database."""

@@ -21,8 +21,8 @@ CORS_CONFIG: Dict[str, Any] = {
 
 # Slot configuration
 SLOT_CONFIG: Dict[str, Any] = {
-    "start_hour": 3,  # 3 AM
-    "end_hour": 15,   # 3 PM (exclusive)
+    "start_hour": 0,  # 12:00 AM (midnight)
+    "end_hour": 24,   # 12:00 AM next day (exclusive)
     "slot_duration_hours": 1,
 }
 

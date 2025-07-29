@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SlotBooking from './pages/SlotBooking';
+import Arduino from './pages/Arduino';
 
 const theme = createTheme({
   palette: {
@@ -104,6 +105,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/booking" element={<SlotBooking />} />
+            <Route path="/arduino" element={<Arduino />} />
           </Routes>
         </Router>
       </AuthProvider>
