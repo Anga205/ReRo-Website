@@ -7,6 +7,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SlotBooking from './pages/SlotBooking';
 import Arduino from './pages/Arduino';
+import GettingStarted from './pages/blog/GettingStarted';
+import ArduinoBasics from './pages/blog/ArduinoBasics';
+import SafetyGuidelines from './pages/blog/SafetyGuidelines';
+import ProjectGallery from './pages/blog/ProjectGallery';
+import IoTRemoteControl from './pages/blog/IoTRemoteControl';
 
 const theme = createTheme({
   palette: {
@@ -106,6 +111,11 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/booking" element={<SlotBooking />} />
             <Route path="/arduino" element={<Arduino />} />
+            <Route path="/blog/getting-started" element={<GettingStarted />} />
+            <Route path="/blog/arduino-basics" element={<ArduinoBasics />} />
+            <Route path="/blog/safety-guidelines" element={<SafetyGuidelines />} />
+            <Route path="/blog/project-gallery" element={<ProjectGallery />} />
+            <Route path="/blog/iot-remote-control" element={<IoTRemoteControl />} />
           </Routes>
         </Router>
       </AuthProvider>
