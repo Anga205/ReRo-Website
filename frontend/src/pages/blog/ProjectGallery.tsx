@@ -35,12 +35,12 @@ const ProjectGallery: React.FC = () => {
       <Grid container spacing={3}>
         {projects.map((project, index) => (
           <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
-            <Card sx={{ height: '100%', bgcolor: '#0f172a', border: '1px solid #334155' }}>
+            <Card sx={{ height: '100%', bgcolor: '#030712', border: '1px solid #374151' }}>
               <CardMedia
                 component="div"
                 sx={{
                   height: 200,
-                  bgcolor: '#1e293b',
+                  bgcolor: '#111827',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -63,7 +63,7 @@ const ProjectGallery: React.FC = () => {
         ))}
       </Grid>
       
-      <Box sx={{ mt: 4, p: 3, bgcolor: '#1e293b', borderRadius: 2, border: '1px solid #334155' }}>
+      <Box sx={{ mt: 4, p: 3, bgcolor: '#111827', borderRadius: 2, border: '1px solid #374151' }}>
         <Typography variant="h6" sx={{ mb: 2, color: 'secondary.main' }}>
           Submit Your Project
         </Typography>

@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
   ];
 
   const drawer = (
-    <Box sx={{ width: 280, height: '100%', bgcolor: '#1e293b' }}>
+    <Box sx={{ width: 280, height: '100%', bgcolor: '#111827' }}>
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" color="primary">
           ReRo Lab
@@ -63,7 +63,7 @@ const Navbar: React.FC = () => {
           <CloseIcon />
         </IconButton>
       </Box>
-      <Divider sx={{ borderColor: '#334155' }} />
+      <Divider sx={{ borderColor: '#374151' }} />
       
       <List>
         <ListItem component="button" onClick={() => handleNavigation('/')} sx={{ cursor: 'pointer' }}>
@@ -88,9 +88,9 @@ const Navbar: React.FC = () => {
         </ListItem>
       </List>
       
-      <Divider sx={{ borderColor: '#334155', my: 1 }} />
+      <Divider sx={{ borderColor: '#374151', my: 1 }} />
       
-      <Typography variant="subtitle1" sx={{ px: 2, py: 1, color: '#94a3b8', fontWeight: 600 }}>
+      <Typography variant="subtitle1" sx={{ px: 2, py: 1, color: '#9ca3af', fontWeight: 600 }}>
         Blog Posts
       </Typography>
       
@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
       </List>
       
       <Box sx={{ mt: 'auto', p: 2 }}>
-        <Divider sx={{ borderColor: '#334155', mb: 2 }} />
+        <Divider sx={{ borderColor: '#374151', mb: 2 }} />
         {isAuthenticated ? (
           <Button
             fullWidth
@@ -145,9 +145,9 @@ const Navbar: React.FC = () => {
       <AppBar 
         position="sticky" 
         sx={{ 
-          bgcolor: 'rgba(15, 23, 42, 0.95)',
+          bgcolor: 'rgba(3, 7, 18, 0.95)',
           backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid #334155'
+          borderBottom: '1px solid #374151'
         }}
       >
         <Toolbar>
@@ -200,7 +200,7 @@ const Navbar: React.FC = () => {
         }}
         sx={{
           '& .MuiDrawer-paper': {
-            bgcolor: '#1e293b',
+            bgcolor: '#111827',
             border: 'none',
           },
         }}

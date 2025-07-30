@@ -27,8 +27,8 @@ const theme = createTheme({
       dark: '#10b981',
     },
     background: {
-      default: '#0f172a', // Dark slate background
-      paper: '#1e293b', // Lighter dark for cards
+      default: '#030712', // bg-gray-950 equivalent
+      paper: '#111827', // bg-gray-900 for cards
     },
     text: {
       primary: '#f1f5f9', // Light text
@@ -72,9 +72,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1e293b',
+          backgroundColor: '#111827',
           borderRadius: 12,
-          border: '1px solid #334155',
+          border: '1px solid #374151',
         },
       },
     },

@@ -9,7 +9,7 @@ const Home: React.FC = () => {
   // Show loading while authentication is being initialized
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
           <CircularProgress />
           <span className="text-slate-400">Loading...</span>
@@ -19,7 +19,7 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gray-950">
       <Navbar />
       
       {/* Main Content */}

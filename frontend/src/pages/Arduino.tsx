@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { 
   Box, 
   Button, 
@@ -14,14 +13,11 @@ import {
   Chip,
   Container,
   Divider,
-  AppBar,
-  Toolbar,
-  IconButton
 } from '@mui/material';
-import { Home, Book } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../contexts/AuthContext';
+import Navbar from '../components/Navbar';
 import type { Device } from '../types';
 
 interface SerialMessage {
@@ -331,33 +327,11 @@ void loop() {
   }, []);
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Navigation Header */}
-      <AppBar position="static" sx={{ mb: 2 }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Arduino Code Editor
-          </Typography>
-          <IconButton 
-            color="inherit" 
-            component={Link} 
-            to="/"
-            sx={{ mr: 1 }}
-          >
-            <Home />
-          </IconButton>
-          <IconButton 
-            color="inherit" 
-            component={Link} 
-            to="/booking"
-          >
-            <Book />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
+    <div className="min-h-screen bg-gray-950">
+      <Navbar />
+      
       <Container maxWidth="xl" sx={{ py: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, color: 'primary.main' }}>
           Arduino Code Editor
         </Typography>
 
@@ -581,7 +555,7 @@ void loop() {
         </Typography>
       </Paper>
       </Container>
-    </Box>
+    </div>
   );
 };
 

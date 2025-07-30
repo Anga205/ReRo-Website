@@ -50,7 +50,7 @@ const IoTRemoteControl: React.FC = () => {
         Remote Control Architecture:
       </Typography>
       
-      <Paper sx={{ p: 2, mb: 3, bgcolor: '#0f172a', border: '1px solid #334155' }}>
+      <Paper sx={{ p: 2, mb: 3, bgcolor: '#030712', border: '1px solid #374151' }}>
         <Box component="pre" sx={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '0.9rem' }}>
 {`User Interface (Web Browser)
         ↓

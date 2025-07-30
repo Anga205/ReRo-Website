@@ -9,6 +9,7 @@ import {
   Box,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import Navbar from '../components/Navbar';
 import LoginHeader from '../components/auth/LoginHeader';
 import LoginForm from '../components/auth/LoginForm';
 import LoginFooter from '../components/auth/LoginFooter';
@@ -30,11 +31,14 @@ const Login: React.FC = () => {
   // Show loading while authentication is being initialized
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <CircularProgress />
-          <span className="text-slate-400">Loading...</span>
-        </Box>
+      <div className="min-h-screen bg-gray-950">
+        <Navbar />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 64px)' }}>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+            <CircularProgress />
+            <span className="text-slate-400">Loading...</span>
+          </Box>
+        </div>
       </div>
     );
   }
@@ -58,28 +62,31 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <Container maxWidth="sm">
-        <Card className="shadow-2xl rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm">
-          <CardContent className="p-8">
-            <LoginHeader />
+    <div className="min-h-screen bg-gray-950">
+      <Navbar />
+      <div className="flex items-center justify-center p-4" style={{ minHeight: 'calc(100vh - 64px)' }}>
+        <Container maxWidth="sm">
+          <Card className="shadow-2xl rounded-2xl border border-gray-700 bg-gray-900/50 backdrop-blur-sm">
+            <CardContent className="p-8">
+              <LoginHeader />
 
-            {error && (
-              <Alert severity="error" className="mb-4 rounded-lg" sx={{ 
-                backgroundColor: '#7f1d1d', 
-                color: '#fecaca',
-                border: '1px solid #991b1b'
-              }}>
-                {error}
-              </Alert>
-            )}
+              {error && (
+                <Alert severity="error" className="mb-4 rounded-lg" sx={{ 
+                  backgroundColor: '#7f1d1d', 
+                  color: '#fecaca',
+                  border: '1px solid #991b1b'
+                }}>
+                  {error}
+                </Alert>
+              )}
 
-            <LoginForm onSubmit={handleSubmit} loading={loading} />
+              <LoginForm onSubmit={handleSubmit} loading={loading} />
 
-            <LoginFooter />
-          </CardContent>
-        </Card>
-      </Container>
+              <LoginFooter />
+            </CardContent>
+          </Card>
+        </Container>
+      </div>
     </div>
   );
 };

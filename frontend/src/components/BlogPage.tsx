@@ -9,7 +9,7 @@ interface BlogPageProps {
 
 const BlogPage: React.FC<BlogPageProps> = ({ title, children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gray-950">
       <Navbar />
       
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -17,9 +17,9 @@ const BlogPage: React.FC<BlogPageProps> = ({ title, children }) => {
           elevation={3}
           sx={{ 
             p: 4, 
-            bgcolor: 'rgba(30, 41, 59, 0.8)',
+            bgcolor: 'rgba(17, 24, 39, 0.8)',
             backdropFilter: 'blur(10px)',
-            border: '1px solid #334155'
+            border: '1px solid #374151'
           }}
         >
           <Typography 
