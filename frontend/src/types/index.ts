@@ -62,4 +62,5 @@ export interface AuthContextType {
   register: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  isInitialized: boolean;
 }

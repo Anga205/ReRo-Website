@@ -10,16 +10,28 @@ import SlotsGrid from '../components/booking/SlotsGrid';
 import type { Slot } from '../types';
 
 const SlotBooking: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
   const { slotsData, isConnected, error, bookSlot, cancelSlot } = useWebSocket();
   const [loading, setLoading] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isInitialized && !isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isInitialized, navigate]);
+
+  // Show loading while authentication is being initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <CircularProgress />
+          <span className="text-slate-400">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   const handleSlotAction = async (slot: Slot) => {
     if (loading) return;

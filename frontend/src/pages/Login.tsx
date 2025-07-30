@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Card,
   CardContent,
   Alert,
+  CircularProgress,
+  Box,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import LoginHeader from '../components/auth/LoginHeader';
@@ -15,8 +17,27 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { login } = useAuth();
+  const { login, isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      navigate('/booking');
+    }
+  }, [isAuthenticated, isInitialized, navigate]);
+
+  // Show loading while authentication is being initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <CircularProgress />
+          <span className="text-slate-400">Loading...</span>
+        </Box>
+      </div>
+    );
+  }
 
   const handleSubmit = async (email: string, password: string) => {
     setLoading(true);

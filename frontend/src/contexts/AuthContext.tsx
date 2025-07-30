@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, AuthContextType } from '../types';
 import type { ReactNode } from 'react';
 
@@ -18,6 +18,49 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Check localStorage on initialization to restore user session
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const storedEmail = localStorage.getItem('user_email');
+      const storedPassword = localStorage.getItem('user_password');
+      
+      if (storedEmail && storedPassword) {
+        // Validate stored credentials with the backend
+        try {
+          const response = await fetch('http://localhost:8000/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: storedEmail, password: storedPassword }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              setUser({ email: storedEmail });
+            } else {
+              // Invalid credentials, clear localStorage
+              localStorage.removeItem('user_email');
+              localStorage.removeItem('user_password');
+            }
+          } else {
+            // Server error, clear localStorage
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_password');
+          }
+        } catch (error) {
+          console.error('Auto-login error:', error);
+          // Network error, but keep credentials for retry later
+        }
+      }
+      setIsInitialized(true);
+    };
+
+    initializeAuth();
+  }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
@@ -84,6 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     isAuthenticated,
+    isInitialized,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
