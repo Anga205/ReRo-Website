@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, CircularProgress } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/Navbar';
@@ -64,7 +64,7 @@ const SlotBooking: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-950">
       <Navbar />
-      <Container maxWidth="xl" className="py-8">
+      <div style={{ width: '100%', padding: '2rem 1rem' }}>
         <BookingHeader />
         
         <StatusAlerts error={error} isConnected={isConnected} />
@@ -75,7 +75,7 @@ const SlotBooking: React.FC = () => {
           loading={loading}
           onSlotAction={handleSlotAction}
         />
-      </Container>
+      </div>
     </div>
   );
 };

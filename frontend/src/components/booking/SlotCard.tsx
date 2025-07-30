@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Button, Chip, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import type { Slot } from '../../types';
 
 interface SlotCardProps {
@@ -21,116 +21,113 @@ const SlotCard: React.FC<SlotCardProps> = ({ slot, userEmail, loading, onSlotAct
   const getSlotStatus = (slot: Slot) => {
     if (slot.is_booked) {
       if (slot.booked_by === userEmail) {
-        return 'mine';
+        return 'mine'; // Red - our booking, can cancel
       }
-      return 'booked';
+      return 'booked'; // Gray - booked by someone else
     }
-    return 'available';
+    return 'available'; // Green - available to book
   };
 
-  const getSlotColor = (status: string) => {
+  const getSlotColors = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-green-900/30 border-green-500 hover:bg-green-800/40 hover:border-green-400 shadow-green-500/20';
-      case 'booked':
-        return 'bg-gray-700/50 border-gray-500 cursor-not-allowed opacity-60';
+        return {
+          backgroundColor: '#28A745',
+          hoverColor: '#1e7e34'
+        };
       case 'mine':
-        return 'bg-red-900/30 border-red-500 hover:bg-red-800/40 hover:border-red-400 shadow-red-500/20';
+        return {
+          backgroundColor: '#B00020',
+          hoverColor: '#8b001a'
+        };
+      case 'booked':
+        return {
+          backgroundColor: '#6b7280',
+          hoverColor: '#6b7280'
+        };
       default:
-        return 'bg-gray-800/50 border-gray-600';
+        return {
+          backgroundColor: '#6b7280',
+          hoverColor: '#6b7280'
+        };
     }
   };
 
-  const getButtonText = (status: string) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'available':
-        return 'Book Slot';
+        return 'Available - Click to Book';
       case 'mine':
-        return 'Cancel Booking';
+        return 'Booked';
       case 'booked':
+        return 'Booked';
+      default:
         return 'Unavailable';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const getStatusChip = (status: string) => {
-    switch (status) {
-      case 'available':
-        return <Chip label="Available" sx={{ backgroundColor: '#22c55e', color: 'white' }} size="small" />;
-      case 'mine':
-        return <Chip label="Your Booking" sx={{ backgroundColor: '#ef4444', color: 'white' }} size="small" />;
-      case 'booked':
-        return <Chip label="Booked" sx={{ backgroundColor: '#6b7280', color: 'white' }} size="small" />;
-      default:
-        return <Chip label="Unknown" color="default" size="small" />;
     }
   };
 
   const status = getSlotStatus(slot);
-  const isDisabled = status === 'booked' || loading === slot.id;
+  const colors = getSlotColors(status);
+  const isClickable = status === 'available' || status === 'mine';
+  const isLoading = loading === slot.id;
 
   return (
-    <Card
-      className={`transition-all duration-300 transform hover:scale-105 cursor-pointer border-2 shadow-lg ${getSlotColor(status)} ${
-        isDisabled ? 'cursor-not-allowed' : 'hover:shadow-xl'
-      }`}
-      onClick={() => !isDisabled && onSlotAction(slot)}
+    <Box
+      onClick={() => isClickable && !isLoading && onSlotAction(slot)}
       sx={{
-        minHeight: 200,
+        width: '140px',
+        height: '60px',
+        backgroundColor: colors.backgroundColor,
+        borderRadius: '8px',
+        cursor: isClickable ? 'pointer' : 'default',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: 'transparent',
-        backdropFilter: 'blur(10px)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '8px',
+        transition: 'all 0.2s ease',
+        position: 'relative',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        '&:hover': isClickable ? {
+          backgroundColor: colors.hoverColor,
+          transform: 'translateY(-1px)',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)'
+        } : {}
       }}
     >
-      <CardContent className="p-6 text-center flex-grow flex flex-col justify-between">
-        <Box>
-          <Typography variant="h5" className="font-bold text-slate-100 mb-3">
+      {isLoading ? (
+        <CircularProgress size={20} sx={{ color: 'white' }} />
+      ) : (
+        <>
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              lineHeight: 1.2,
+              textAlign: 'center',
+              marginBottom: '2px'
+            }}
+          >
             {formatTime(slot.start_time)}
           </Typography>
-          <Typography variant="h6" className="text-slate-300 mb-4">
-            {formatTime(slot.end_time)}
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'white',
+              fontSize: '0.75rem',
+              lineHeight: 1.1,
+              textAlign: 'center',
+              fontWeight: '400',
+              opacity: 0.9
+            }}
+          >
+            {getStatusText(status)}
           </Typography>
-          
-          <Box className="mb-4">
-            {getStatusChip(status)}
-          </Box>
-
-          {slot.is_booked && slot.booked_by && (
-            <Typography variant="body2" className="text-slate-400 mb-3">
-              {slot.booked_by === userEmail ? 'Booked by you' : 'Booked by another user'}
-            </Typography>
-          )}
-        </Box>
-
-        <Button
-          variant={status === 'available' ? 'contained' : status === 'mine' ? 'outlined' : 'contained'}
-          fullWidth
-          disabled={isDisabled}
-          className="font-semibold py-3 mt-4"
-          sx={{
-            backgroundColor: status === 'available' ? '#22c55e' : status === 'mine' ? 'transparent' : '#6b7280',
-            color: status === 'mine' ? '#ef4444' : 'white',
-            borderColor: status === 'mine' ? '#ef4444' : 'transparent',
-            '&:hover': {
-              backgroundColor: status === 'available' ? '#16a34a' : status === 'mine' ? '#7f1d1d' : '#6b7280',
-              borderColor: status === 'mine' ? '#dc2626' : 'transparent',
-            },
-            '&:disabled': {
-              backgroundColor: '#4b5563',
-              color: '#9ca3af',
-            },
-          }}
-        >
-          {loading === slot.id ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : (
-            getButtonText(status)
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+        </>
+      )}
+    </Box>
   );
 };
 

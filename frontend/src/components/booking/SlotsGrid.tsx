@@ -33,7 +33,18 @@ const SlotsGrid: React.FC<SlotsGridProps> = ({ slotsData, userEmail, loading, on
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
+    <Box 
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+        gap: '12px',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem',
+        justifyItems: 'center'
+      }}
+    >
       {slotsData.slots.map((slot) => (
         <SlotCard
           key={slot.id}
@@ -43,7 +54,7 @@ const SlotsGrid: React.FC<SlotsGridProps> = ({ slotsData, userEmail, loading, on
           onSlotAction={onSlotAction}
         />
       ))}
-    </div>
+    </Box>
   );
 };
 

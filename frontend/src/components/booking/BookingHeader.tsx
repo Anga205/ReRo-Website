@@ -1,29 +1,34 @@
 import React from 'react';
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Chip } from '@mui/material';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BookingHeader: React.FC = () => {
+  const { user } = useAuth();
+
   return (
-    <Box className="text-center mb-8">
-      <Typography variant="h2" className="font-bold text-slate-100 mb-3">
-        Time Slot Booking
-      </Typography>
-      <Typography variant="h6" className="text-slate-400 mb-6">
-        Select your preferred time slot • 3:00 AM - 3:00 PM
+    <Box className="text-center mb-8" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Typography 
+        variant="h4" 
+        className="font-bold text-white mb-4"
+        sx={{ 
+          fontSize: '1.25rem',
+          textAlign: 'center'
+        }}
+      >
+        Welcome, {user?.email || 'User'}
       </Typography>
       
-      <Box className="flex justify-center space-x-8 mb-8">
-        <Box className="flex items-center space-x-3">
-          <div className="w-4 h-4 bg-green-500 border border-green-400 rounded shadow-green-500/20 shadow-md" />
-          <Typography variant="body1" className="text-slate-300 font-medium">Available</Typography>
-        </Box>
-        <Box className="flex items-center space-x-3">
-          <div className="w-4 h-4 bg-red-500 border border-red-400 rounded shadow-red-500/20 shadow-md" />
-          <Typography variant="body1" className="text-slate-300 font-medium">Your Bookings</Typography>
-        </Box>
-        <Box className="flex items-center space-x-3">
-          <div className="w-4 h-4 bg-gray-500 border border-gray-400 rounded" />
-          <Typography variant="body1" className="text-slate-300 font-medium">Unavailable</Typography>
-        </Box>
+      <Box className="mb-8">
+        <Chip
+          label="Online"
+          sx={{
+            backgroundColor: '#28A745',
+            color: 'white',
+            fontWeight: 'medium',
+            borderRadius: '20px',
+            padding: '4px 12px'
+          }}
+        />
       </Box>
     </Box>
   );
