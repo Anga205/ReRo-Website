@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (storedEmail && storedPassword) {
         // Validate stored credentials with the backend
         try {
-          const response = await fetch('http://localhost:8000/auth/login', {
+          const response = await fetch('https://rerobackend.anga.codes/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
+      const response = await fetch('https://rerobackend.anga.codes/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
+      const response = await fetch('https://rerobackend.anga.codes/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

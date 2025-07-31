@@ -11,7 +11,7 @@ export const useWebSocket = () => {
 
   const connect = useCallback(() => {
     try {
-      ws.current = new WebSocket('ws://localhost:8000/slot-booking');
+      ws.current = new WebSocket('wss://rerobackend.anga.codes/slot-booking');
       
       ws.current.onopen = () => {
         console.log('WebSocket connected');

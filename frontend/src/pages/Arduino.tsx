@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Box, 
   Button, 
@@ -12,13 +12,13 @@ import {
   CircularProgress,
   Chip,
   Container,
-  Divider,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import type { Device } from '../types';
+import LiveStream from '../components/VideoStream';
 
 interface SerialMessage {
   timestamp: string;
@@ -55,9 +55,12 @@ void loop() {
   const [currentSlot, setCurrentSlot] = useState<number>(0);
   const [serialOutput, setSerialOutput] = useState<SerialMessage[]>([]);
   const [isReadingSerial, setIsReadingSerial] = useState(false);
+  const [editorWidth, setEditorWidth] = useState<number>(60); // Percentage width
+  const [isResizing, setIsResizing] = useState(false);
   
   const wsRef = useRef<WebSocket | null>(null);
   const serialOutputRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get current slot (0-23 for 24-hour system)
   const getCurrentSlot = () => {
@@ -69,7 +72,7 @@ void loop() {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('http://localhost:8000/devices');
+        const response = await fetch('https://rerobackend.anga.codes/devices');
         if (response.ok) {
           const data = await response.json();
           console.log('Fetched devices:', data.devices);
@@ -98,7 +101,7 @@ void loop() {
         
         if (!email || !password) return;
 
-        const response = await fetch('http://localhost:8000/slots/user', {
+        const response = await fetch('https://rerobackend.anga.codes/slots/user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -162,7 +165,7 @@ void loop() {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:8000/devices/compile', {
+      const response = await fetch('https://rerobackend.anga.codes/devices/compile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +206,7 @@ void loop() {
       const email = localStorage.getItem('user_email');
       const password = localStorage.getItem('user_password');
 
-      const response = await fetch(`http://localhost:8000/devices/upload/${selectedDevice}`, {
+      const response = await fetch(`https://rerobackend.anga.codes/devices/upload/${selectedDevice}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -247,7 +250,7 @@ void loop() {
       wsRef.current.close();
     }
 
-    const ws = new WebSocket(`ws://localhost:8000/devices/read/${selectedDevice}`);
+    const ws = new WebSocket(`wss://rerobackend.anga.codes/devices/read/${selectedDevice}`);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -316,6 +319,48 @@ void loop() {
 
   // Check if user can upload (has booked current slot)
   const canUpload = userSlot === currentSlot;
+
+  // Resize functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing || !containerRef.current) return;
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const mouseX = e.clientX - containerRect.left;
+    const newWidth = Math.min(Math.max((mouseX / containerWidth) * 100, 20), 80); // Min 20%, Max 80%
+    
+    setEditorWidth(newWidth);
+  }, [isResizing]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   // Clean up WebSocket on unmount
   useEffect(() => {
@@ -401,10 +446,22 @@ void loop() {
       )}
 
       {/* Main Content */}
-      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+      <Box 
+        ref={containerRef}
+        sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          height: '600px',
+          position: 'relative'
+        }}
+      >
         {/* Code Editor */}
-        <Box sx={{ flex: 2, minWidth: '500px' }}>
-          <Paper sx={{ p: 2, height: '600px' }}>
+        <Box sx={{ 
+          width: `${editorWidth}%`, 
+          minWidth: '300px',
+          transition: isResizing ? 'none' : 'width 0.1s ease'
+        }}>
+          <Paper sx={{ p: 2, height: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">Code Editor</Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
@@ -445,115 +502,130 @@ void loop() {
           </Paper>
         </Box>
 
-        {/* Serial Output */}
-        <Box sx={{ flex: 1, minWidth: '300px' }}>
-          <Paper sx={{ p: 2, height: '600px', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Serial Output</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {!isReadingSerial ? (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={startSerialReading}
-                    disabled={!selectedDevice || !canUpload}
-                  >
-                    Start Reading
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={stopSerialReading}
-                    color="secondary"
-                  >
-                    Stop Reading
-                  </Button>
-                )}
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={clearSerialOutput}
-                >
-                  Clear
-                </Button>
+        {/* Resize Handle */}
+        <Box
+          onMouseDown={handleMouseDown}
+          sx={{
+            width: '4px',
+            cursor: 'col-resize',
+            backgroundColor: isResizing ? 'primary.main' : 'divider',
+            transition: 'background-color 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'primary.main',
+            },
+            zIndex: 10,
+          }}
+        />
+
+        {/* LiveStream */}
+        <Box sx={{ 
+          width: `${100 - editorWidth}%`, 
+          minWidth: '250px',
+          transition: isResizing ? 'none' : 'width 0.1s ease'
+        }}>
+          {canUpload ? (
+            <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">Live Stream</Typography>
               </Box>
-            </Box>
-            
-            {isReadingSerial && (
-              <Chip 
-                label="Reading..." 
-                color="success" 
-                size="small" 
-                sx={{ mb: 1, alignSelf: 'flex-start' }}
-              />
-            )}
-            
-            <Box
-              ref={serialOutputRef}
-              sx={{
-                flex: 1,
-                backgroundColor: '#1a1a1a',
-                color: '#00ff00',
-                fontFamily: 'monospace',
-                fontSize: '12px',
-                p: 1,
-                borderRadius: 1,
-                overflow: 'auto',
-                border: 1,
-                borderColor: 'divider'
-              }}
-            >
-              {serialOutput.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                  {isReadingSerial ? 'Waiting for data...' : 'Serial output will appear here'}
-                </Typography>
-              ) : (
-                serialOutput.map((msg, index) => (
-                  <Box key={index} sx={{ mb: 0.5 }}>
-                    <Typography component="span" variant="caption" sx={{ color: '#888', mr: 1 }}>
-                      [{msg.timestamp}]
-                    </Typography>
-                    <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
-                      {msg.data}
-                    </Typography>
-                  </Box>
-                ))
-              )}
-            </Box>
-          </Paper>
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <LiveStream />
+              </Box>
+            </Paper>
+          ) : (
+            <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Live Stream Unavailable
+              </Typography>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                You need to book the current time slot to access the live stream.
+                {userSlot !== null && (
+                  ` Your slot is ${userSlot}:00, current time is ${currentSlot}:00.`
+                )}
+              </Typography>
+            </Paper>
+          )}
         </Box>
       </Box>
 
-      {/* Help Text */}
+      {/* Serial Output */}
       <Paper sx={{ p: 2, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>Instructions</Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          1. <strong>Select a device</strong> from the dropdown above
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          2. <strong>Write your Arduino code</strong> in the editor (C++ syntax supported)
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          3. <strong>Compile</strong> your code to check for errors (optional)
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          4. <strong>Upload</strong> to device (only available if you have booked the current time slot)
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          5. <strong>View serial output</strong> in real-time after uploading
-        </Typography>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="body2" color="warning.main">
-          <strong>Note:</strong> You can only upload code during your booked time slot. 
-          {!canUpload && userSlot !== null && (
-            ` Your slot is ${userSlot}:00, current time is ${currentSlot}:00.`
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Serial Output</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {!isReadingSerial ? (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={startSerialReading}
+                disabled={!selectedDevice || !canUpload}
+              >
+                Start Reading
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={stopSerialReading}
+                color="secondary"
+              >
+                Stop Reading
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={clearSerialOutput}
+            >
+              Clear
+            </Button>
+          </Box>
+        </Box>
+        
+        {isReadingSerial && (
+          <Chip 
+            label="Reading..." 
+            color="success" 
+            size="small" 
+            sx={{ mb: 1, alignSelf: 'flex-start' }}
+          />
+        )}
+        
+        <Box
+          ref={serialOutputRef}
+          sx={{
+            height: '300px',
+            backgroundColor: '#1a1a1a',
+            color: '#00ff00',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            p: 1,
+            borderRadius: 1,
+            overflow: 'auto',
+            border: 1,
+            borderColor: 'divider'
+          }}
+        >
+          {serialOutput.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+              {isReadingSerial ? 'Waiting for data...' : 'Serial output will appear here'}
+            </Typography>
+          ) : (
+            serialOutput.map((msg, index) => (
+              <Box key={index} sx={{ mb: 0.5 }}>
+                <Typography component="span" variant="caption" sx={{ color: '#888', mr: 1 }}>
+                  [{msg.timestamp}]
+                </Typography>
+                <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {msg.data}
+                </Typography>
+              </Box>
+            ))
           )}
-          {userSlot === null && (
-            ' Please book a slot first in the Slot Booking page.'
-          )}
-        </Typography>
+        </Box>
       </Paper>
+
+      {/* Help Text */}
       </Container>
     </div>
   );
