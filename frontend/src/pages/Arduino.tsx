@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import type { Device } from '../types';
 import LiveStream from '../components/VideoStream';
+import { BACKEND_URL } from '../URLs';
 
 interface SerialMessage {
   timestamp: string;
@@ -72,7 +73,7 @@ void loop() {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('https://rerobackend.anga.codes/devices');
+        const response = await fetch(`${BACKEND_URL}/devices`);
         if (response.ok) {
           const data = await response.json();
           console.log('Fetched devices:', data.devices);
@@ -101,7 +102,7 @@ void loop() {
         
         if (!email || !password) return;
 
-        const response = await fetch('https://rerobackend.anga.codes/slots/user', {
+        const response = await fetch(`${BACKEND_URL}/slots/user`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -165,7 +166,7 @@ void loop() {
     setSuccess('');
 
     try {
-      const response = await fetch('https://rerobackend.anga.codes/devices/compile', {
+      const response = await fetch(`${BACKEND_URL}/devices/compile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +207,7 @@ void loop() {
       const email = localStorage.getItem('user_email');
       const password = localStorage.getItem('user_password');
 
-      const response = await fetch(`https://rerobackend.anga.codes/devices/upload/${selectedDevice}`, {
+      const response = await fetch(`${BACKEND_URL}/devices/upload/${selectedDevice}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -249,8 +250,8 @@ void loop() {
     if (wsRef.current) {
       wsRef.current.close();
     }
-
-    const ws = new WebSocket(`wss://rerobackend.anga.codes/devices/read/${selectedDevice}`);
+    const WS_BACKEND_URL = BACKEND_URL.replace('http', 'ws').replace('https', 'wss');
+    const ws = new WebSocket(`${WS_BACKEND_URL}/devices/read/${selectedDevice}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

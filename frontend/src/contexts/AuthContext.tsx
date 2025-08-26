@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, AuthContextType } from '../types';
 import type { ReactNode } from 'react';
+import { BACKEND_URL } from '../URLs';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -29,7 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (storedEmail && storedPassword) {
         // Validate stored credentials with the backend
         try {
-          const response = await fetch('https://rerobackend.anga.codes/auth/login', {
+          const response = await fetch(`${BACKEND_URL}/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('https://rerobackend.anga.codes/auth/login', {
+      const response = await fetch(`${BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('https://rerobackend.anga.codes/auth/register', {
+      const response = await fetch(`${BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -99,6 +99,10 @@ A comprehensive, full-stack web application for real-time slot booking with inte
    # Server runs on http://localhost:8000
    ```
 
+  Environment Variables:
+  ```bash
+  VITE_BACKEND_URL=http://localhost:8000
+  ```
 2. **Start Frontend**:
    ```bash
    cd frontend

@@ -64,7 +64,7 @@ const Home: React.FC = () => {
               lineHeight: 1.4
             }}
           >
-            India's First 24/7 Virtual Robotics Lab by an Educational Institution
+            India's First 24/7 Virtual Robotics Lab by PES University
           </Typography>
           
           {/* Optional decorative elements */}

@@ -1,0 +1,73 @@
+# Netlify configuration for the frontend
+# Build settings (assumes a Vite app with `npm run build` producing `dist`)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Explicit redirects for known SPA routes (from frontend/src/App.tsx)
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/register"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/booking"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/arduino"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/getting-started"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/arduino-basics"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/safety-guidelines"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/project-gallery"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/blog/iot-remote-control"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# Fallback: ensure any other route also serves index.html (SPA behavior)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
