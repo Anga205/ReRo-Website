@@ -9,6 +9,13 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class LoginResponse(BaseModel):
+    """Model for login response with JWT token."""
+    success: bool
+    message: str
+    token: str | None = None
+    user: Dict[str, Any] | None = None
+
 class RegisterRequest(BaseModel):
     """Model for user registration request."""
     email: str
@@ -17,14 +24,21 @@ class RegisterRequest(BaseModel):
 class BookingRequest(BaseModel):
     """Model for booking request with authentication."""
     slot_id: int
-    email: str
-    password: str
+    # For backward compatibility, keep email/password optional but prefer token
+    email: str | None = None
+    password: str | None = None
+    token: str | None = None
 
 class CancellationRequest(BaseModel):
     """Model for cancellation request with authentication."""
     slot_id: int
-    email: str
-    password: str
+    email: str | None = None
+    password: str | None = None
+    token: str | None = None
+    
+class TokenOnlyRequest(BaseModel):
+    """Model carrying only a token; used for protected reads."""
+    token: str | None = None
 
 def create_slot_model(slot_id: int, start_time: str, end_time: str, is_booked: bool, booked_by: str = None) -> Dict[str, Any]:
     """Create a slot data model."""

@@ -1087,3 +1087,13 @@ wscat -c ws://localhost:8000/slot-booking
 - `LOCAL_AUTH_SUMMARY.md` - Local authentication documentation
 
 **The ReRo Website Backend is now production-ready with secure local authentication, user registration, and comprehensive email-based user management! 🚀🔐**
+
+## 🔑 JWT Authentication (Updated)
+
+- Login now returns a JWT: `POST /auth/login -> { success, message, token, user }`.
+- Send `Authorization: Bearer <token>` on protected HTTP routes: `/book-slot`, `/cancel-slot`, `/my-bookings`, `/slots/user`, and `/devices/upload/{device_number}`.
+- WebSockets accept JWT in messages for booking/cancel and device serial auth: include `{ "token": "<JWT>" }` instead of email/password.
+- Environment variables:
+  - `JWT_SECRET_KEY` (set this in production)
+  - `JWT_ALGORITHM` (default: HS256)
+  - `JWT_EXPIRE_MINUTES` (default: 60)

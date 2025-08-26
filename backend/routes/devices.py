@@ -5,13 +5,14 @@ import subprocess
 import logging
 from typing import Dict, Any
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from device_handler.get_devices import connected_devices, detect_serial_devices
 from device_handler.utils import ArduinoBoardConfig, CodeManager, DeviceValidator
 from device_handler.serial_manager import serial_manager
 from auth.local_auth import LocalAuthService
+from auth.jwt_utils import get_current_user_email
 from database.operations import get_database_connection
 
 logger = logging.getLogger(__name__)
@@ -21,8 +22,6 @@ code_manager = CodeManager()
 
 class CodeUploadRequest(BaseModel):
     code: str
-    email: str
-    password: str
 
 class CodeCompileRequest(BaseModel):
     code: str
@@ -47,9 +46,9 @@ def is_user_slot_booked(user_email: str, slot_id: int) -> bool:
         logger.error(f"Error checking user slot booking: {e}")
         return False
 
-def authenticate_user_for_upload(email: str, password: str) -> bool:
-    """Authenticate user for code upload."""
-    user_profile = LocalAuthService.authenticate_user(email, password)
+def authenticate_user_for_upload(email: str) -> bool:
+    """Authenticate user for code upload. With JWT this is already validated, keep function for future logic."""
+    user_profile = LocalAuthService.get_user_by_email(email)
     return user_profile is not None
 
 def compile_arduino_code(code: str, board_model: str, project_id: str) -> Dict[str, Any]:
@@ -221,48 +220,50 @@ async def compile_code(request: CodeCompileRequest):
         raise HTTPException(status_code=500, detail=f"Compilation failed: {str(e)}")
 
 @devices_router.post("/upload/{device_number}")
-async def upload_code(device_number: int, request: CodeUploadRequest):
+async def upload_code(device_number: int, request: CodeUploadRequest, current_user_email: str = Depends(get_current_user_email)):
     """Upload Arduino code to a specific device."""
     project_id = str(uuid.uuid4())
-    
+
     try:
-        # Authenticate user
-        if not authenticate_user_for_upload(request.email, request.password):
+        # Authenticate user (redundant with JWT, kept for sanity)
+        if not authenticate_user_for_upload(current_user_email):
             raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
         # Check if user has booked the current time slot
         current_slot = get_current_time_slot()
-        if not is_user_slot_booked(request.email, current_slot):
-            # Format time display properly for 24-hour format
+        if not is_user_slot_booked(current_user_email, current_slot):
             end_hour = (current_slot + 1) % 24
             raise HTTPException(
-                status_code=403, 
-                detail=f"You must have booked the current time slot ({current_slot:02d}:00-{end_hour:02d}:00) to upload code"
+                status_code=403,
+                detail=(
+                    f"You must have booked the current time slot "
+                    f"({current_slot:02d}:00-{end_hour:02d}:00) to upload code"
+                ),
             )
-        
+
         # Refresh device list and validate device number
         global connected_devices
         connected_devices = detect_serial_devices()
-        
+
         validation_error = DeviceValidator.get_device_validation_error(
-            device_number, len(connected_devices), 
-            connected_devices[device_number]["model"] if device_number < len(connected_devices) else "unknown"
+            device_number,
+            len(connected_devices),
+            connected_devices[device_number]["model"] if device_number < len(connected_devices) else "unknown",
         )
-        
         if validation_error:
             raise HTTPException(status_code=400, detail=validation_error)
-        
+
         device = connected_devices[device_number]
         device_model = device["model"]
         device_port = device["port"]
-        
+
         # Stop serial reading for this device (only one process can access serial port)
         serial_manager.stop_reading_device(device_number)
         serial_manager.reset_device_output(device_number)
-        
+
         # Upload code to device
         upload_result = upload_arduino_code(request.code, device_port, device_model, project_id)
-        
+
         if upload_result["success"]:
             return {
                 "success": True,
@@ -270,18 +271,17 @@ async def upload_code(device_number: int, request: CodeUploadRequest):
                 "device": device,
                 "compile_output": upload_result["compile_output"],
                 "upload_output": upload_result["upload_output"],
-                "project_id": project_id
+                "project_id": project_id,
             }
-        else:
-            return {
-                "success": False,
-                "message": upload_result["error"],
-                "device": device,
-                "compile_output": upload_result["compile_output"],
-                "upload_output": upload_result["upload_output"],
-                "project_id": project_id
-            }
-            
+        return {
+            "success": False,
+            "message": upload_result["error"],
+            "device": device,
+            "compile_output": upload_result["compile_output"],
+            "upload_output": upload_result["upload_output"],
+            "project_id": project_id,
+        }
+
     except HTTPException:
         raise  # Re-raise HTTP exceptions
     except subprocess.TimeoutExpired:

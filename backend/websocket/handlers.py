@@ -13,13 +13,22 @@ from core.models import (
 from core.slot_manager import book_slot, cancel_slot_booking, get_slot_summary
 from websocket.manager import broadcast_slot_update
 from auth.local_auth import validate_user_credentials
+from auth.jwt_utils import decode_access_token
 
 logger = logging.getLogger(__name__)
 
-async def handle_slot_booking(slot_id: int, email: str, password: str) -> Dict:
+async def handle_slot_booking(slot_id: int, email: str | None = None, password: str | None = None, token: str | None = None) -> Dict:
     """Handle slot booking request with authentication and return response message."""
-    # Validate user credentials first
-    user_email = await validate_user_credentials(email, password)
+    # Resolve user via token or legacy credentials
+    user_email = None
+    if token:
+        try:
+            claims = decode_access_token(token)
+            user_email = claims.get("sub")
+        except Exception:
+            user_email = None
+    elif email and password:
+        user_email = await validate_user_credentials(email, password)
     if not user_email:
         return create_booking_response(
             success=False,
@@ -43,10 +52,17 @@ async def handle_slot_booking(slot_id: int, email: str, password: str) -> Dict:
             slot_id=slot_id
         )
 
-async def handle_slot_cancellation(slot_id: int, email: str, password: str) -> Dict:
+async def handle_slot_cancellation(slot_id: int, email: str | None = None, password: str | None = None, token: str | None = None) -> Dict:
     """Handle slot cancellation request with authentication and return response message."""
-    # Validate user credentials first
-    user_email = await validate_user_credentials(email, password)
+    user_email = None
+    if token:
+        try:
+            claims = decode_access_token(token)
+            user_email = claims.get("sub")
+        except Exception:
+            user_email = None
+    elif email and password:
+        user_email = await validate_user_credentials(email, password)
     if not user_email:
         return create_cancellation_response(
             success=False,
@@ -87,24 +103,26 @@ async def process_client_message(websocket: WebSocket, message_data: Dict) -> No
         slot_id = message_data.get("slot_id")
         email = message_data.get("email")
         password = message_data.get("password")
+        token = message_data.get("token")
         
-        if slot_id is not None and email and password:
-            response = await handle_slot_booking(slot_id, email, password)
+        if slot_id is not None and (token or (email and password)):
+            response = await handle_slot_booking(slot_id, email, password, token)
             await websocket.send_text(json.dumps(response))
         else:
-            error_response = create_error_response("Missing slot_id, email, or password in booking request")
+            error_response = create_error_response("Missing slot_id or auth in booking request")
             await websocket.send_text(json.dumps(error_response))
     
     elif message_type == "cancel_slot":
         slot_id = message_data.get("slot_id")
         email = message_data.get("email")
         password = message_data.get("password")
+        token = message_data.get("token")
         
-        if slot_id is not None and email and password:
-            response = await handle_slot_cancellation(slot_id, email, password)
+        if slot_id is not None and (token or (email and password)):
+            response = await handle_slot_cancellation(slot_id, email, password, token)
             await websocket.send_text(json.dumps(response))
         else:
-            error_response = create_error_response("Missing slot_id, email, or password in cancellation request")
+            error_response = create_error_response("Missing slot_id or auth in cancellation request")
             await websocket.send_text(json.dumps(error_response))
     
     elif message_type == "get_slots":

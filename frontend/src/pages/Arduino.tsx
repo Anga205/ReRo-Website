@@ -97,17 +97,16 @@ void loop() {
       if (!user?.email) return;
       
       try {
-        const email = localStorage.getItem('user_email');
-        const password = localStorage.getItem('user_password');
-        
-        if (!email || !password) return;
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
 
         const response = await fetch(`${BACKEND_URL}/slots/user`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ token }),
         });
 
         if (response.ok) {
@@ -204,18 +203,17 @@ void loop() {
     setSuccess('');
 
     try {
-      const email = localStorage.getItem('user_email');
-      const password = localStorage.getItem('user_password');
+      const token = localStorage.getItem('auth_token');
 
       const response = await fetch(`${BACKEND_URL}/devices/upload/${selectedDevice}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           code,
-          email,
-          password
+          // body does not need credentials
         }),
       });
 
@@ -238,10 +236,9 @@ void loop() {
   const startSerialReading = () => {
     if (!selectedDevice || !user?.email) return;
 
-    const email = localStorage.getItem('user_email');
-    const password = localStorage.getItem('user_password');
+  const token = localStorage.getItem('auth_token');
 
-    if (!email || !password) {
+  if (!token) {
       setError('Authentication required for serial reading');
       return;
     }
@@ -260,10 +257,7 @@ void loop() {
       setSerialOutput([]);
       
       // Send authentication
-      ws.send(JSON.stringify({
-        email,
-        password
-      }));
+  ws.send(JSON.stringify({ token }));
     };
 
     ws.onmessage = (event) => {

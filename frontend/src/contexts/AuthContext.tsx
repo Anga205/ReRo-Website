@@ -19,42 +19,42 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Utility: SHA-1 hash as hex string
+  const sha1Hex = async (input: string): Promise<string> => {
+    const data = new TextEncoder().encode(input);
+    const digest = await crypto.subtle.digest('SHA-1', data);
+    const bytes = new Uint8Array(digest);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
 
   // Check localStorage on initialization to restore user session
   useEffect(() => {
     const initializeAuth = async () => {
       const storedEmail = localStorage.getItem('user_email');
-      const storedPassword = localStorage.getItem('user_password');
-      
-      if (storedEmail && storedPassword) {
-        // Validate stored credentials with the backend
+      const storedToken = localStorage.getItem('auth_token');
+      if (storedEmail && storedToken) {
         try {
-          const response = await fetch(`${BACKEND_URL}/auth/login`, {
+          // Probe a protected endpoint to validate token
+          const resp = await fetch(`${BACKEND_URL}/slots/user`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${storedToken}`,
             },
-            body: JSON.stringify({ email: storedEmail, password: storedPassword }),
+            body: JSON.stringify({ token: storedToken }),
           });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-              setUser({ email: storedEmail });
-            } else {
-              // Invalid credentials, clear localStorage
-              localStorage.removeItem('user_email');
-              localStorage.removeItem('user_password');
-            }
+          if (resp.ok) {
+            setUser({ email: storedEmail });
+            setToken(storedToken);
           } else {
-            // Server error, clear localStorage
             localStorage.removeItem('user_email');
-            localStorage.removeItem('user_password');
+            localStorage.removeItem('auth_token');
           }
         } catch (error) {
           console.error('Auto-login error:', error);
-          // Network error, but keep credentials for retry later
         }
       }
       setIsInitialized(true);
@@ -65,21 +65,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
+      const passwordSha1 = await sha1Hex(password);
       const response = await fetch(`${BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password: passwordSha1 }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.success && data.token) {
           setUser({ email });
-          // Store credentials securely for websocket usage
+          setToken(data.token);
           localStorage.setItem('user_email', email);
-          localStorage.setItem('user_password', password);
+          localStorage.setItem('auth_token', data.token);
           return true;
         }
       }
@@ -92,12 +93,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
+      const passwordSha1 = await sha1Hex(password);
       const response = await fetch(`${BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password: passwordSha1 }),
       });
 
       if (response.ok) {
@@ -116,8 +118,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_password');
+  setToken(null);
+  localStorage.removeItem('user_email');
+  localStorage.removeItem('auth_token');
   }, []);
 
   const isAuthenticated = user !== null;
@@ -129,6 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isAuthenticated,
     isInitialized,
+  token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

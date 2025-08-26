@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { SlotsData, WebSocketMessage } from '../types';
+import { BACKEND_URL } from '../URLs';
 
 export const useWebSocket = () => {
   const [slotsData, setSlotsData] = useState<SlotsData | null>(null);
@@ -11,7 +12,8 @@ export const useWebSocket = () => {
 
   const connect = useCallback(() => {
     try {
-      ws.current = new WebSocket('wss://rerobackend.anga.codes/slot-booking');
+      const WS_BACKEND_URL = BACKEND_URL.replace('http', 'ws').replace('https', 'wss');
+      ws.current = new WebSocket(`${WS_BACKEND_URL}/slot-booking`);
       
       ws.current.onopen = () => {
         console.log('WebSocket connected');
@@ -73,30 +75,28 @@ export const useWebSocket = () => {
   }, []);
 
   const bookSlot = useCallback((slotId: number) => {
-    const email = localStorage.getItem('user_email');
-    const password = localStorage.getItem('user_password');
-    
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && email && password) {
+    const token = localStorage.getItem('auth_token');
+    const email = localStorage.getItem('user_email') || undefined;
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && token) {
       const message: WebSocketMessage = {
         type: 'book_slot',
         slot_id: slotId,
+        token,
         email,
-        password,
       };
       ws.current.send(JSON.stringify(message));
     }
   }, []);
 
   const cancelSlot = useCallback((slotId: number) => {
-    const email = localStorage.getItem('user_email');
-    const password = localStorage.getItem('user_password');
-    
-    if (ws.current && ws.current.readyState === WebSocket.OPEN && email && password) {
+    const token = localStorage.getItem('auth_token');
+    const email = localStorage.getItem('user_email') || undefined;
+    if (ws.current && ws.current.readyState === WebSocket.OPEN && token) {
       const message: WebSocketMessage = {
         type: 'cancel_slot',
         slot_id: slotId,
+        token,
         email,
-        password,
       };
       ws.current.send(JSON.stringify(message));
     }

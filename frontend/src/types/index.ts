@@ -35,21 +35,21 @@ export interface LoginRequest {
 
 export interface BookingRequest {
   slot_id: number;
-  email: string;
-  password: string;
+  token: string;
+  email?: string;
 }
 
 export interface CancellationRequest {
   slot_id: number;
-  email: string;
-  password: string;
+  token: string;
+  email?: string;
 }
 
 export interface WebSocketMessage {
   type: 'book_slot' | 'cancel_slot' | 'get_slots' | 'slots_update' | 'booking_response' | 'cancellation_response' | 'error';
   slot_id?: number;
   email?: string;
-  password?: string;
+  token?: string;
   data?: SlotsData;
   success?: boolean;
   message?: string;
@@ -63,4 +63,5 @@ export interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isInitialized: boolean;
+  token?: string | null;
 }

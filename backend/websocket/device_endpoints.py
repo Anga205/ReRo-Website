@@ -12,13 +12,16 @@ from pydantic import BaseModel
 from device_handler.get_devices import connected_devices, detect_serial_devices
 from device_handler.serial_manager import serial_manager
 from auth.local_auth import LocalAuthService
+from auth.jwt_utils import decode_access_token
 from database.operations import get_database_connection
 
 logger = logging.getLogger(__name__)
 
 class DeviceLoginRequest(BaseModel):
-    email: str
-    password: str
+    # Support either token or legacy email/password
+    token: str | None = None
+    email: str | None = None
+    password: str | None = None
 
 # Store active WebSocket connections for each device and their broadcast tasks
 device_connections: Dict[int, Set[WebSocket]] = {}
@@ -154,21 +157,21 @@ async def device_read_websocket_endpoint(websocket: WebSocket, device_number: in
         
         try:
             auth_message = json.loads(auth_data)
+
+            # Determine email via token or legacy credentials
+            email = None
+            if isinstance(auth_message, dict) and auth_message.get("token"):
+                try:
+                    claims = decode_access_token(auth_message["token"])
+                    email = claims.get("sub")
+                except Exception:
+                    email = None
+            elif isinstance(auth_message, dict) and auth_message.get("email") and auth_message.get("password"):
+                # Fallback legacy authentication
+                if authenticate_user_for_device(auth_message["email"], auth_message["password"]):
+                    email = auth_message["email"]
             
-            if not isinstance(auth_message, dict) or "email" not in auth_message or "password" not in auth_message:
-                error_msg = {
-                    "type": "error",
-                    "message": "Invalid authentication format. Expected: {\"email\": \"...\", \"password\": \"...\"}"
-                }
-                await websocket.send_text(json.dumps(error_msg))
-                await websocket.close()
-                return
-            
-            # Authenticate user
-            email = auth_message["email"]
-            password = auth_message["password"]
-            
-            if not authenticate_user_for_device(email, password):
+            if not email:
                 error_msg = {
                     "type": "error", 
                     "message": "Authentication failed"

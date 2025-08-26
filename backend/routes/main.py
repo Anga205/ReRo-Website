@@ -1,12 +1,12 @@
 """Main API routes."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from core.models import create_root_response, create_health_response
 from websocket.manager import get_connection_count
 from core.slot_manager import get_booked_slots_list
 from database.operations import get_database_stats, get_user_bookings
-from auth.local_auth import validate_user_credentials
-from core.models import BookingRequest, CancellationRequest, LoginRequest
+from core.models import BookingRequest, CancellationRequest, TokenOnlyRequest
+from auth.jwt_utils import get_current_user_email
 from fastapi import HTTPException
 import logging
 
@@ -61,14 +61,12 @@ async def get_statistics():
     }
 
 @main_router.post("/book-slot")
-async def book_slot_http(booking_data: BookingRequest):
+async def book_slot_http(booking_data: BookingRequest, current_user_email: str = Depends(get_current_user_email)):
     """HTTP endpoint to book a slot with authentication."""
     from core.slot_manager import book_slot
     
-    # Validate user credentials
-    user_email = await validate_user_credentials(booking_data.email, booking_data.password)
-    if not user_email:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Use JWT subject as user identifier
+    user_email = current_user_email
     
     # Attempt to book the slot
     success = book_slot(booking_data.slot_id, user_email)
@@ -83,14 +81,11 @@ async def book_slot_http(booking_data: BookingRequest):
         raise HTTPException(status_code=400, detail=f"Slot {booking_data.slot_id} is not available")
 
 @main_router.post("/cancel-slot")
-async def cancel_slot_http(cancellation_data: CancellationRequest):
+async def cancel_slot_http(cancellation_data: CancellationRequest, current_user_email: str = Depends(get_current_user_email)):
     """HTTP endpoint to cancel a slot booking with authentication."""
     from core.slot_manager import cancel_slot_booking
     
-    # Validate user credentials
-    user_email = await validate_user_credentials(cancellation_data.email, cancellation_data.password)
-    if not user_email:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    user_email = current_user_email
     
     # Attempt to cancel the slot
     success = cancel_slot_booking(cancellation_data.slot_id, user_email)
@@ -105,12 +100,9 @@ async def cancel_slot_http(cancellation_data: CancellationRequest):
         raise HTTPException(status_code=400, detail=f"Slot {cancellation_data.slot_id} was not booked by you or does not exist")
 
 @main_router.post("/my-bookings")
-async def get_my_bookings(login_data: LoginRequest):
+async def get_my_bookings(_: TokenOnlyRequest, current_user_email: str = Depends(get_current_user_email)):
     """Get all bookings for the authenticated user."""
-    # Validate user credentials
-    user_email = await validate_user_credentials(login_data.email, login_data.password)
-    if not user_email:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    user_email = current_user_email
     
     bookings = get_user_bookings(user_email)
     return {
@@ -120,12 +112,9 @@ async def get_my_bookings(login_data: LoginRequest):
     }
 
 @main_router.post("/slots/user")
-async def get_user_current_slot(login_data: LoginRequest):
+async def get_user_current_slot(_: TokenOnlyRequest, current_user_email: str = Depends(get_current_user_email)):
     """Get the current slot booked by the authenticated user."""
-    # Validate user credentials
-    user_email = await validate_user_credentials(login_data.email, login_data.password)
-    if not user_email:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    user_email = current_user_email
     
     bookings = get_user_bookings(user_email)
     print(bookings)

@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from core.models import LoginRequest, RegisterRequest
 from auth.local_auth import LocalAuthService
+from auth.jwt_utils import create_access_token
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,9 +53,11 @@ async def login(login_data: LoginRequest):
         )
         
         if profile:
+            token = create_access_token(subject=profile.get("email"))
             return {
                 "success": True,
                 "message": "Login successful",
+                "token": token,
                 "user": {
                     "id": profile.get("id"),
                     "email": profile.get("email"),
